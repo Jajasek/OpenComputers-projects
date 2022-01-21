@@ -1,0 +1,109 @@
+# Minitel for OpenOS
+
+This package includes the Minitel daemon, in etc/rc.d/minitel.lua, and the minitel library for using minitel, in usr/lib/minitel.lua.
+
+## Minitel daemon
+
+### Installation
+
+#### With OPPM
+
+1. Run `oppm install minitel-util` - this will install both the Minitel utilities and pull in the Minitel daemon as a dependency.
+2. Run `mtcfg`
+
+This will walk you through setting up Minitel.
+
+#### Manual
+
+1. Place minitel.lua into /etc/rc.d
+2. Place your hostname into /etc/hostname
+3. Run rc minitel enable; rc minitel start
+
+### Configuration
+
+The minitel daemon keeps a settings file in /etc/minitel.cfg, which is loaded on start. This can be edited directly and the daemon restarted, or settings can be changed from the command line.
+
+To change a setting, one invokes:
+
+`rc minitel set <option> <value>`
+
+#### Available settings
+
+- port: the physical port the protocol runs over
+- pctime: the amount of time packets are kept in the packet cache
+- retry: how many seconds between resend attempts of reliable packets
+- rctime: How long items are kept in the routing cache
+- retrycount: how many attempts to resend should be made
+- route: whether to forward packets
+- debug: whether to output debugging info to the display
+
+In addition, one can invoke to get large amounts of debug output, *rc minitel set_route <hostname> <local_modem> <remote_modem>* to add a static route, and *rc minitel del_route <hostname>* to delete a static route.
+
+### Events
+
+The Minitel daemon handles both sending and receiving packets, via events. There are four types of events used:.
+
+#### net\_msg, *from*, *port*, *data*
+
+This event is triggered when the Minitel daemon receives a data (type 0 or 1) packet.
+
+#### net\_ack, *packet ID*
+
+This event is triggered when the Minitel daemon receives an acknowledgement (type 2) packet.
+
+#### net\_broadcast, *from*, *port*, *data*
+
+This event is triggered when the Minitel daemon receives a broadcast (addressed to '~') packet of type 1 or 2.
+
+#### net\_send, *packet type*, *to*, *port*, *data*, *packet ID*
+
+This event can be queued (with computer.pushSignal) to manually build packets. While you should never need to use this, it may be useful for certain edge cases.
+
+## Minitel library
+
+The minitel library provides an easy way of interacting with the minitel daemon, and implements higher-level features of the stack.
+
+### API
+
+#### Layer 3
+
+*minitel.genPacketID()* - returns a string of random data
+
+*minitel.usend(host, port, data, pid)* - Sends an unreliable packet to *host* on *port* containing *data*, optionally with the packet ID *pid*.
+
+*minitel.rsend(host, port, data, noblock)* - Sends a reliable packet to *host* on *port* containing *data*. If *noblock* is true, don't wait for an acknowledgement, instead return the packet ID.
+
+#### Layer 4
+
+*minitel.send(host, port, data)* - Sends *data* reliably and in order to *host* on *port*.
+
+#### Layer 5
+
+*minitel.open(to,port)* - Establishes a stream to *host* on *port* and returns a stream object
+
+*minitel.listen(port)* - Waits for another node to establish a stream on *port*, and returns the stream object.
+
+*minitel.flisten(port,callback)* - Spawns an event listener that will wait for another node to establish a stream on *port*, and run the function provided as *callback* with the socket object as its argument..
+
+#### Stream objects
+
+*stream:write(data)* - Sends *data* to the node at the other end of the stream
+
+*stream:read(length)* - Reads data from the stream, in several modes:
+
+- If you pass *length* as a number, up to *length* bytes will be read from the socket.
+- If *length* == "\*a", everything in the buffer will be returned.
+- If you pass *length* as any other string, and there is *length* in the buffer somewhere, the data up to *length* in the buffer will be returned. This ignores all but the first character.
+- If *length* is nil, it will read up until the next newline.
+
+*stream:close()* - Ends the stream and prevents further writing.
+
+#### Variables
+
+*minitel.mtu = 4096* - The maximum length of the data portion of a packet for *minitel.send*
+
+*minitel.streamdelay = 60* - The time, in seconds, *minitel.open* will wait for a response while trying to establish a connection.
+
+*minitel.minport = 32768* - The lowest port *minitel.listen* will allocate to a new connection.
+
+*minitel.maxport = 65535* - The highest port *minitel.listen* will allocate to a new connection.

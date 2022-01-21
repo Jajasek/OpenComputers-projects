@@ -1,0 +1,32 @@
+=======TURBINES=========
+
+Max target 2000, standby target 60
+Up (secondary): 4 rows ludicrite
+Down (primary): 4 rows manyullyn + 1 row ludicrite XXX
+
+standby  standby, standby
+power_0  medium, standby
+power_1  fast, standby
+power_2  fast, medium
+power_3  fast, fast
+stop
+
+=======REACTOR========
+
+Dimensions: 7x7x6
+
+keep_pressure
+standby
+stop
+
+========COMPUTERS=========
+
+control - turbines
+          reactor
+monitor - turbines (downstairs) -> 2xT3 + 2xT2
+          reactor (downstairs) -> T3 + T2
+          tanks (downstairs) -> T3
+
+=====ANOTHER PROBLEMS WITH MINITEL=====
+minitel.rsend returns true if *any* ack packet is received
+broadcasts are not routed

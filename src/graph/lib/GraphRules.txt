@@ -1,0 +1,51 @@
+Graphic: ./GraphScreenshot.ase
+
+Values are added to the graph using method new.add(), but 2 values are needed 
+to draw each graph part. Therefore the first value is only saved to the buffer, 
+and during the second call to new.add() the part is drawn and the buffer is cleared.
+
+There can be up to 15 graphs on single screen. For coloring the graphs, palette
+colors are used. Index 15 is reserved for the background, lower indexes have
+higher priority (are plotted sooner and aren't overdrawn by lower-priority graphs).
+This means first value has color index 0, while its index in data tables (_major etc.)
+is 1.
+
+The first, buffered value is 'minor', the second value is 'major'. The major
+value from previous part is called 'old'.
+
+Parts are always 2 pixels wide, major is always on the right, old on the left.
+The position (side) of minor influences the shape of the curves.
+
+There are 4 distinct graph parts: 'simple', 'direct', 'overshoot' and 'opposite'.
+
+SIMPLE:     occurs when the difference of major and old is at most 1 and minor 
+            is in the interval between these two (inclusive). Only 1 pixel is drawn
+            at the position of major.
+
+DIRECT:     minor is in the interval between old and major (inclusive). The break between
+            left and right happens at the y-coordinate of minor. The minor is
+            on the left if old is closer than major, otherwise on the right.
+            In case minor is in the middle, the position depends on the shape
+            of the previous part.
+            When previous part is direct, overshoot or opposite, the y-position
+            (i.e. left or right) is the same as the y-position of the previous
+            minor. For simple, minor is left when old is local extreme, otherwise
+            right.
+            
+OVERSHOOT:  major is between old (inclusive) and minor (exclusive). Minor is on the
+            right, the line between old and minor is broken in the middle (closer
+            to old if not possible).
+            
+OPPOSITE:   old is between major and minor (exclusive). Minor is on the left, 
+            the line between minor and major is broken in the middle (closer to major 
+            if not possible).
+
+If one of the graphed values (arguments of add()) is nil, then the value will not be drawn, therefore the graph is splitted.
+
+old     minor     major
+ -        0         0    -nothing
+ -        0         1    -dot
+ 0        1         0    -dot
+ 1        1         0    -line
+ 0        1         1    -line
+ 1        1         1    -part
