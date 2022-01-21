@@ -54,8 +54,8 @@ local function setReactor()
     print(n..' reactors are available. Press [y] to choose the currently '
            ..'activated reactor, or anything else to activate another reactor. '
            ..'Press [q] to quit.')
-    local i = 0
     while true do
+      local i = 0
       for addr, _ in pairs(available) do
         local reactor = component.proxy(addr)
         local rod_levels = {}
@@ -106,9 +106,9 @@ local function setTurbines(partial)
       print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
           ..'available. Press [y] to choose the activated turbine, or anything '
           ..'else to activate another turbine. Press [q] to quit.')
-      local j = 0
       local selected = false
       while not selected do
+        local j = 0
         for addr, _ in pairs(available) do
           local turbine = component.proxy(addr)
           local flow_rate_max = turbine.getFluidFlowRateMax()
@@ -150,27 +150,39 @@ local function getConfig()
     return
   end
 
-  if (not addresses.reactor) or
-          component.type(addresses.reactor) ~= 'br_reactor' then
-    addresses.reactor, proxies.reactor = setReactor()
-    save = true
-  else
-    proxies.reactor = component.proxy(addresses.reactor)
-  end
-
-  if addresses.turbines then
-    proxies.turbines = {}
-    for _, addr in ipairs(addresses.turbines) do
-      if component.type(addr) == 'br_turbine' then
-        table.insert(proxies.turbines, component.proxy(addr))
-      else
-        addresses.turbines, proxies.turbines = setTurbines(proxies.turbines)
-        break
+  (function ()
+    if (not addresses.reactor) or
+            component.type(addresses.reactor) ~= 'br_reactor' then
+      local new = setReactor()
+      if not new then
+        return
       end
+      addresses.reactor, proxies.reactor = new
+      save = true
+    else
+      proxies.reactor = component.proxy(addresses.reactor)
     end
-  else
-    addresses.turbines, proxies.turbines = setTurbines()
-  end
+
+    if addresses.turbines then
+      proxies.turbines = {}
+      for _, addr in ipairs(addresses.turbines) do
+        if component.type(addr) == 'br_turbine' then
+          table.insert(proxies.turbines, component.proxy(addr))
+        else
+          local new = setTurbines(proxies.turbines)
+          if not new then return end
+          addresses.turbines, proxies.turbines = new
+          save = true
+          break
+        end
+      end
+    else
+      local new = setTurbines()
+      if not new then return end
+      addresses.turbines, proxies.turbines = new
+      save = true
+    end
+  end)()
 
   if save then
     saveConfig(addresses)
