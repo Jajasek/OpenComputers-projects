@@ -42,7 +42,7 @@ end
 
 local function chooseReactor()
   local available = component.list('br_reactor')
-  local n = count(available)
+  local n = len(available)
   if n == 0 then
     io.stderr:write('Error: no available reactor')
     return
