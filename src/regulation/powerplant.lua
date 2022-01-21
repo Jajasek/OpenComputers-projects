@@ -80,9 +80,7 @@ function change_mode_turbine(key)
       target_t[i] = 0
       enable_coil[i] = true
       t[i].setActive(false)
-      for i = 1, NUMBER_OF_TURBINES do
-        regulators_t[i].set_setpoint(target_t[i])
-      end
+      regulators_t[i].set_setpoint(target_t[i])
     end
     return
   end

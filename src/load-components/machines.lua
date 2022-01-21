@@ -84,7 +84,7 @@ local function setReactor()
   end
 end
 
-local function setTurbines(partial)
+local function setTurbines()
   local available = component.list('br_turbine')
   local n = len(available)
   if n == 0 then
@@ -169,7 +169,7 @@ local function getConfig()
         if component.type(addr) == 'br_turbine' then
           table.insert(proxies.turbines, component.proxy(addr))
         else
-          local new = setTurbines(proxies.turbines)
+          local new = setTurbines()
           if not new then return end
           addresses.turbines, proxies.turbines = new
           save = true
@@ -187,6 +187,7 @@ local function getConfig()
   if save then
     saveConfig(addresses)
   end
+  return proxies
 end
 
 
