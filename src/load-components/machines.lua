@@ -186,6 +186,7 @@ local function getFluids(filter)
 end
 
 local function printTanks(tanks, count)
+  print('entering printTanks('..tostring(tanks)..')')
   local xRes, yRes = component.gpu.getResolution()
   local xCur,yCur = term.getCursor()
   for i = 1, count do
