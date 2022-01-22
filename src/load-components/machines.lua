@@ -61,9 +61,9 @@ local function setReactor()
     local addr = (available())
     return addr, component.proxy(addr)
   else
-    term.write(n..' reactors are available. Press [y] to choose the currently '
-                  ..'activated reactor, or [n] to activate another reactor. '
-                  ..'Press [q] to quit.\n', true)
+    print(n..' reactors are available. Press [y] to choose the currently '
+           ..'activated reactor, or [n] to activate another reactor. '
+           ..'Press [q] to quit.')
     print('Press [s] to start...')
     local cmd = getInput('sq')
     if cmd == 'q' then return end
@@ -108,6 +108,7 @@ local function setTurbines()
     local addr = (available())
     return {addr}, {component.proxy(addr)}
   else
+    term.clear()
     print('There are '..n..' turbines. How many will be used?')
     local count = tonumber(io.read())
     if not count or count <= 0 or count > n then
@@ -122,9 +123,9 @@ local function setTurbines()
         table.insert(t_proxies, component.proxy(available[1]))
         break
       end
-      term.write('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
+      print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
           ..'available. Press [y] to choose the activated turbine, or [n] '
-          ..'to activate another turbine. Press [q] to quit.\n', true)
+          ..'to activate another turbine. Press [q] to quit.')
       local selected = false
       while not selected do
         local j = 0
@@ -188,7 +189,7 @@ end
 local function printTanks(tanks, count)
   --print('entering printTanks('..require('serialization').serialize(tanks)..')')
   local xRes, yRes = component.gpu.getResolution()
-  local xCur,yCur = term.getCursor()
+  local xCur, yCur = term.getCursor()
   for i = 1, count do
     local addr, _, _, name, amount, capacity = table.unpack(tanks[i])
     if addr then
@@ -223,11 +224,12 @@ local function setSteam()
                                data[3]})
     end
   else
-    term.write(count..' possible steam tanks were found. Type delimited list '
+    term.clear()
+    print(count..' possible steam tanks were found. Type delimited list '
           ..'of indices to select some of them. Enter empty line to submit. '
           ..'Use command "l" to list non-selected tanks and "c" to toggle '
           ..'"change mode" - tanks that change the amount of liquid will be '
-          ..'selected.\n', true)
+          ..'selected.')
     printTanks(tanks, count)
     local cmd
     while cmd ~= '' do
