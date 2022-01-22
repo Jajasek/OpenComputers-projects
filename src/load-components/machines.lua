@@ -161,20 +161,16 @@ local function setTurbines()
   end
 end
 
-local function getFluids(filter)
-  --print('entering getFluids()')
+local function getFluids(filter, in_use)
   local tank_controllers = component.list('tank_controller')
   local fluids = {}  -- addr, side, index, name, amount, capacity
   local monolithic = filter and true or false
   for addr, _ in tank_controllers do
-    --print('addr: '..addr)
     for side = 0, 5 do
-      --print('side: '..side)
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
-        --print('index: '..index)
-        if not filter or not info[index].name or info[index].name == filter
-        then
+        if not in_use[{addr, side, index}] and (not filter or
+                not info[index].name or info[index].name == filter) then
           table.insert(fluids, {addr, side, index, info[index].name,
                                 info[index].amount, info[index].capacity})
           if not info[index].name then monolithic = false end
@@ -191,8 +187,8 @@ local function printTanks(tanks, count)
   local xRes, yRes = component.gpu.getResolution()
   local xCur, yCur = term.getCursor()
   for i = 1, count do
-    local addr, _, _, name, amount, capacity = table.unpack(tanks[i])
-    if addr then
+    if tanks[i] then
+      local addr, _, _, name, amount, capacity = table.unpack(tanks[i])
       local str = '['..i..'] '..addr..': '..tostring(name)..' ('..tostring(amount)..'/'..tostring(capacity)..')'
       yCur = yCur + math.ceil(#str / xRes)
       if yCur > yRes then
@@ -208,8 +204,8 @@ local function printTanks(tanks, count)
   end
 end
 
-local function setTanks(fluid_name)
-  local tanks, nonempty = getFluids(fluid_name)
+local function setTanks(fluid_name, in_use)
+  local tanks, nonempty = getFluids(fluid_name, in_use or {})
   local count = #tanks
   if count == 0 then
     io.stderr:write('Error: no available '..fluid_name..' tanks')
@@ -219,7 +215,7 @@ local function setTanks(fluid_name)
   local proxies = {}
   if nonempty then
     for _, data in ipairs(tanks) do
-      table.insert(addresses, {data[1], data[2], data[3]})
+      addresses[{data[1], data[2], data[3]}] = true
       table.insert(proxies, {component.proxy(data[1]), data[2],
                              data[3]})
     end
@@ -242,7 +238,7 @@ local function setTanks(fluid_name)
         for selected in string.gmatch(cmd, '%d+') do
           local addr, side, index = table.unpack(tanks[tonumber(selected)])
           tanks[tonumber(selected)] = nil
-          table.insert(addresses, {addr, side, index})
+          addresses[{addr, side, index}] = true
           table.insert(proxies, {component.proxy(addr), side, index})
         end
       end
@@ -302,7 +298,7 @@ local function getConfig()
 
     if addresses.steam then
       proxies.steam = {}
-      for _, data in ipairs(addresses.steam) do
+      for data, _ in pairs(addresses.steam) do
         local addr, side, index = table.unpack(data)
         if component.type(addr) == 'tank_controller' then
           table.insert(proxies.steam,
@@ -325,6 +321,34 @@ local function getConfig()
         return
       end
       addresses.steam, proxies.steam = new
+      save = true
+    end
+
+    if addresses.water then
+      proxies.water = {}
+      for data, _ in pairs(addresses.water) do
+        local addr, side, index = table.unpack(data)
+        if component.type(addr) == 'tank_controller' and not addresses.steam[data] then
+          table.insert(proxies.water,
+                       {component.proxy(addr), side, index})
+        else
+          local new = setTanks('water', addresses.steam)
+          if not new then
+            proxies = nil
+            return
+          end
+          addresses.water, proxies.water = new
+          save = true
+          break
+        end
+      end
+    else
+      local new = setTanks('water', addresses.steam)
+      if not new then
+        proxies = nil
+        return
+      end
+      addresses.water, proxies.water = new
       save = true
     end
   end)()
