@@ -181,7 +181,7 @@ local function printTanks(tanks, count)
   for i = 1, count do
     local addr, _, _, name, amount, capacity = tanks[i]
     if addr then
-      local str = '['..i..']'..addr..': '..name..' ('..amount..'/'..capacity..')'
+      local str = '['..i..']'..addr..': '..tostring(name)..' ('..tostring(amount)..'/'..tostring(capacity)..')'
       yCur = yCur + math.ceil(#str / xRes)
       if yCur > yRes then
         term.write("[Press any key to continue]")
