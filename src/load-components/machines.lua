@@ -220,17 +220,19 @@ local function setTanks(fluid_name, in_use)
                              data[3]})
     end
   else
-    term.clear()
+    -- term.clear()
     print(count..' possible '..fluid_name..' tanks were found. Type delimited '
           ..'list of indices to select some of them. Enter empty line to '
           ..'submit. Use command "l" to list non-selected tanks and "c" to '
           ..'toggle "change mode" - tanks that change the amount of liquid '
-          ..'will be selected.')
+          ..'will be selected. Type "q" to quit.')
     printTanks(tanks, count)
     local cmd
     while cmd ~= '' do
       cmd = io.read()
-      if string.lower(cmd) == 'l' then
+      if string.lower(cmd) == 'q' then
+        return
+      elseif string.lower(cmd) == 'l' then
         printTanks(tanks, count)
       elseif string.lower(cmd) == 'c' then
         print('Not implemented')
@@ -249,6 +251,7 @@ end
 
 local function getConfig()
   local addresses = loadConfig()
+  print(serial.serialize(addresses))
   local proxies = {}
   local save = false
   if not addresses then
