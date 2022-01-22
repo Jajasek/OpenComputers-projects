@@ -119,8 +119,11 @@ local function setTurbines()
     local proxies = {}
     for i = 1, count do
       if n == i then
-        table.insert(addresses, available[1])
-        table.insert(proxies, component.proxy(available[1]))
+        for addr, _ in pairs(available) do
+          table.insert(addresses, addr)
+          table.insert(proxies, component.proxy(addr))
+          break
+        end
         break
       end
       print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
