@@ -115,12 +115,12 @@ local function setTurbines()
       io.stderr:write('Error: illegal value')
       return
     end
-    local t_addresses = {}
-    local t_proxies = {}
+    local addresses = {}
+    local proxies = {}
     for i = 1, count do
       if n == i then
-        table.insert(t_addresses, available[1])
-        table.insert(t_proxies, component.proxy(available[1]))
+        table.insert(addresses, available[1])
+        table.insert(proxies, component.proxy(available[1]))
         break
       end
       print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
@@ -146,8 +146,8 @@ local function setTurbines()
           turbine.setInductorEngaged(coils_engaged)
 
           if cmd == 'y' then
-            table.insert(t_addresses, addr)
-            table.insert(t_proxies, turbine)
+            table.insert(addresses, addr)
+            table.insert(proxies, turbine)
             available[addr] = nil
             selected = true
             break
@@ -157,7 +157,7 @@ local function setTurbines()
         end
       end
     end
-    return t_addresses, t_proxies
+    return addresses, proxies
   end
 end
 
@@ -208,28 +208,28 @@ local function printTanks(tanks, count)
   end
 end
 
-local function setSteam()
-  local tanks, nonempty = getFluids('steam')
+local function setTanks(fluid_name)
+  local tanks, nonempty = getFluids(fluid_name)
   local count = #tanks
   if count == 0 then
-    io.stderr:write('Error: no available steam tanks')
+    io.stderr:write('Error: no available '..fluid_name..' tanks')
     return
   end
-  local s_addresses = {}
-  local s_proxies = {}
+  local addresses = {}
+  local proxies = {}
   if nonempty then
     for _, data in ipairs(tanks) do
-      table.insert(s_addresses, {data[1], data[2], data[3]})
-      table.insert(s_proxies, {component.proxy(data[1]), data[2],
-                               data[3]})
+      table.insert(addresses, {data[1], data[2], data[3]})
+      table.insert(proxies, {component.proxy(data[1]), data[2],
+                             data[3]})
     end
   else
     term.clear()
-    print(count..' possible steam tanks were found. Type delimited list '
-          ..'of indices to select some of them. Enter empty line to submit. '
-          ..'Use command "l" to list non-selected tanks and "c" to toggle '
-          ..'"change mode" - tanks that change the amount of liquid will be '
-          ..'selected.')
+    print(count..' possible '..fluid_name..' tanks were found. Type delimited '
+          ..'list of indices to select some of them. Enter empty line to '
+          ..'submit. Use command "l" to list non-selected tanks and "c" to '
+          ..'toggle "change mode" - tanks that change the amount of liquid '
+          ..'will be selected.')
     printTanks(tanks, count)
     local cmd
     while cmd ~= '' do
@@ -242,13 +242,13 @@ local function setSteam()
         for selected in string.gmatch(cmd, '%d+') do
           local addr, side, index = table.unpack(tanks[tonumber(selected)])
           tanks[tonumber(selected)] = nil
-          table.insert(s_addresses, {addr, side, index})
-          table.insert(s_proxies, {component.proxy(addr), side, index})
+          table.insert(addresses, {addr, side, index})
+          table.insert(proxies, {component.proxy(addr), side, index})
         end
       end
     end
   end
-  return s_addresses, s_proxies
+  return addresses, proxies
 end
 
 local function getConfig()
@@ -308,7 +308,7 @@ local function getConfig()
           table.insert(proxies.steam,
                        {component.proxy(addr), side, index})
         else
-          local new = setSteam()
+          local new = setTanks('steam')
           if not new then
             proxies = nil
             return
@@ -319,7 +319,7 @@ local function getConfig()
         end
       end
     else
-      local new = setSteam()
+      local new = setTanks('steam')
       if not new then
         proxies = nil
         return
