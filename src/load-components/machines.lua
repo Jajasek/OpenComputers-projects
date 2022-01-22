@@ -161,13 +161,17 @@ local function setTurbines()
 end
 
 local function getFluids(filter)
+  print('entering getFluids()')
   local tank_controllers = component.list('tank_controller')
   local fluids = {}  -- addr, side, index, name, amount, capacity
   local monolithic = filter and true or false
   for addr, _ in tank_controllers do
+    print('addr: '..addr)
     for side = 0, 5 do
+      print('side: '..side)
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
+        print('index: '..index)
         if not filter or not info[index].name or info[index].name == filter
         then
           table.insert(fluids, {addr, side, index, info[index].name,
@@ -177,6 +181,7 @@ local function getFluids(filter)
       end
     end
   end
+  print('exiting getFluids()')
   return fluids, monolithic
 end
 
