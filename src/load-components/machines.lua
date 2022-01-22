@@ -117,6 +117,11 @@ local function setTurbines()
     local t_addresses = {}
     local t_proxies = {}
     for i = 1, count do
+      if n == i then
+        table.insert(t_addresses, available[1])
+        table.insert(t_proxies, component.proxy(available[1]))
+        break
+      end
       print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
           ..'available. Press [y] to choose the activated turbine, or [n] '
           ..'to activate another turbine. Press [q] to quit.')
