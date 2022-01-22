@@ -162,6 +162,7 @@ local function setTurbines()
 end
 
 local function getFluids(filter, in_use)
+  print('entering getFluids, in_use = '..serial.serialize(in_use))
   local tank_controllers = component.list('tank_controller')
   local fluids = {}  -- addr, side, index, name, amount, capacity
   local monolithic = filter and true or false
@@ -178,12 +179,10 @@ local function getFluids(filter, in_use)
       end
     end
   end
-  --print('exiting getFluids()')
   return fluids, monolithic
 end
 
 local function printTanks(tanks, count)
-  --print('entering printTanks('..require('serialization').serialize(tanks)..')')
   local xRes, yRes = component.gpu.getResolution()
   local xCur, yCur = term.getCursor()
   for i = 1, count do
@@ -205,6 +204,7 @@ local function printTanks(tanks, count)
 end
 
 local function setTanks(fluid_name, in_use)
+  print('Searching for tanks...')
   local tanks, nonempty = getFluids(fluid_name, in_use or {})
   local count = #tanks
   if count == 0 then
@@ -328,7 +328,8 @@ local function getConfig()
       proxies.water = {}
       for data, _ in pairs(addresses.water) do
         local addr, side, index = table.unpack(data)
-        if component.type(addr) == 'tank_controller' and not addresses.steam[data] then
+        if component.type(addr) == 'tank_controller' and
+                not addresses.steam[data] then
           table.insert(proxies.water,
                        {component.proxy(addr), side, index})
         else
