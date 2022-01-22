@@ -241,6 +241,7 @@ local function setSteam()
       else
         for selected in string.gmatch(cmd, '%d+') do
           local addr, side, index = table.unpack(tanks[tonumber(selected)])
+          tanks[tonumber(selected)] = nil
           table.insert(s_addresses, {addr, side, index})
           table.insert(s_proxies, {component.proxy(addr), side, index})
         end
