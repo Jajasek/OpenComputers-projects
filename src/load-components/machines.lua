@@ -63,7 +63,7 @@ local function setReactor()
   else
     term.write(n..' reactors are available. Press [y] to choose the currently '
                   ..'activated reactor, or [n] to activate another reactor. '
-                  ..'Press [q] to quit.')
+                  ..'Press [q] to quit.\n', true)
     print('Press [s] to start...')
     local cmd = getInput('sq')
     if cmd == 'q' then return end
@@ -124,7 +124,7 @@ local function setTurbines()
       end
       term.write('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
           ..'available. Press [y] to choose the activated turbine, or [n] '
-          ..'to activate another turbine. Press [q] to quit.')
+          ..'to activate another turbine. Press [q] to quit.\n', true)
       local selected = false
       while not selected do
         local j = 0
@@ -192,7 +192,7 @@ local function printTanks(tanks, count)
   for i = 1, count do
     local addr, _, _, name, amount, capacity = table.unpack(tanks[i])
     if addr then
-      local str = '['..i..']'..addr..': '..tostring(name)..' ('..tostring(amount)..'/'..tostring(capacity)..')'
+      local str = '['..i..'] '..addr..': '..tostring(name)..' ('..tostring(amount)..'/'..tostring(capacity)..')'
       yCur = yCur + math.ceil(#str / xRes)
       if yCur > yRes then
         term.write("[Press any key to continue]")
@@ -202,7 +202,7 @@ local function printTanks(tanks, count)
           yCur = yCur + math.ceil(#str / xRes)
         end
       end
-      term.write(str..'\n')
+      term.write(str..'\n', true)
     end
   end
 end
@@ -227,7 +227,7 @@ local function setSteam()
           ..'of indices to select some of them. Enter empty line to submit. '
           ..'Use command "l" to list non-selected tanks and "c" to toggle '
           ..'"change mode" - tanks that change the amount of liquid will be '
-          ..'selected.')
+          ..'selected.\n', true)
     printTanks(tanks, count)
     local cmd
     while cmd ~= '' do
@@ -238,7 +238,7 @@ local function setSteam()
         print('Not implemented')
       else
         for selected in string.gmatch(cmd, '%d+') do
-          local addr, side, index = tanks[tonumber(selected)]
+          local addr, side, index = table.unpack(tanks[tonumber(selected)])
           table.insert(s_addresses, {addr, side, index})
           table.insert(s_proxies, {component.proxy(addr), side, index})
         end
