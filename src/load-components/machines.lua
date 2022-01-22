@@ -61,7 +61,7 @@ local function setReactor()
     local addr = (available())
     return addr, component.proxy(addr)
   else
-    print(n..' reactors are available. Press [y] to choose the currently '
+    term.write(n..' reactors are available. Press [y] to choose the currently '
                   ..'activated reactor, or [n] to activate another reactor. '
                   ..'Press [q] to quit.')
     print('Press [s] to start...')
@@ -122,7 +122,7 @@ local function setTurbines()
         table.insert(t_proxies, component.proxy(available[1]))
         break
       end
-      print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
+      term.write('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
           ..'available. Press [y] to choose the activated turbine, or [n] '
           ..'to activate another turbine. Press [q] to quit.')
       local selected = false
@@ -161,17 +161,17 @@ local function setTurbines()
 end
 
 local function getFluids(filter)
-  print('entering getFluids()')
+  --print('entering getFluids()')
   local tank_controllers = component.list('tank_controller')
   local fluids = {}  -- addr, side, index, name, amount, capacity
   local monolithic = filter and true or false
   for addr, _ in tank_controllers do
-    print('addr: '..addr)
+    --print('addr: '..addr)
     for side = 0, 5 do
-      print('side: '..side)
+      --print('side: '..side)
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
-        print('index: '..index)
+        --print('index: '..index)
         if not filter or not info[index].name or info[index].name == filter
         then
           table.insert(fluids, {addr, side, index, info[index].name,
@@ -181,16 +181,16 @@ local function getFluids(filter)
       end
     end
   end
-  print('exiting getFluids()')
+  --print('exiting getFluids()')
   return fluids, monolithic
 end
 
 local function printTanks(tanks, count)
-  print('entering printTanks('..tostring(tanks)..')')
+  --print('entering printTanks('..require('serialization').serialize(tanks)..')')
   local xRes, yRes = component.gpu.getResolution()
   local xCur,yCur = term.getCursor()
   for i = 1, count do
-    local addr, _, _, name, amount, capacity = tanks[i]
+    local addr, _, _, name, amount, capacity = table.unpack(tanks[i])
     if addr then
       local str = '['..i..']'..addr..': '..tostring(name)..' ('..tostring(amount)..'/'..tostring(capacity)..')'
       yCur = yCur + math.ceil(#str / xRes)
@@ -223,7 +223,7 @@ local function setSteam()
                                data[3]})
     end
   else
-    print(count..' possible steam tanks were found. Type delimited list '
+    term.write(count..' possible steam tanks were found. Type delimited list '
           ..'of indices to select some of them. Enter empty line to submit. '
           ..'Use command "l" to list non-selected tanks and "c" to toggle '
           ..'"change mode" - tanks that change the amount of liquid will be '
