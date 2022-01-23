@@ -173,9 +173,10 @@ local function getFluids(filter, in_use)
     for side = 0, 5 do
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
-        print('in_use['..serial.serialize({addr, side, index})..'] = '..tostring(in_use[{addr, side, index}]))
+        local index_table = setmetatable({addr, side, index}, {__eq = function(a, b) return table.concat(a) == table.concat(b) end})
+        print('in_use['..serial.serialize({addr, side, index})..'] = '..tostring(in_use[index_table]))
         getInput(' ')
-        if (not in_use[{addr, side, index}]) and (not filter or
+        if (not in_use[index_table]) and (not filter or
                 not info[index].name or info[index].name == filter) then
           table.insert(fluids, {addr, side, index, info[index].name,
                                 info[index].amount, info[index].capacity})
