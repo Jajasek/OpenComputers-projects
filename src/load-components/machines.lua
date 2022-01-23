@@ -211,8 +211,8 @@ end
 
 local function setTanks(fluid_name, in_use)
   print('Searching for tanks...')
-  local in_use_set
-  for _, data in in_use do
+  local in_use_set = {}
+  for _, data in ipairs(in_use or {}) do
     in_use_set[table.concat(data, ',')] = true
   end
   local tanks, nonempty = getFluids(fluid_name, in_use_set)
@@ -248,10 +248,12 @@ local function setTanks(fluid_name, in_use)
         print('Not implemented')
       else
         for selected in string.gmatch(cmd, '%d+') do
-          local addr, side, index = table.unpack(tanks[tonumber(selected)])
-          tanks[tonumber(selected)] = nil
-          table.insert(addresses, {addr, side, index})
-          table.insert(proxies, {component.proxy(addr), side, index})
+          if tanks[tonumber(selected)] then
+            local addr, side, index = table.unpack(tanks[tonumber(selected)])
+            tanks[tonumber(selected)] = nil
+            table.insert(addresses, {addr, side, index})
+            table.insert(proxies, {component.proxy(addr), side, index})
+          end
         end
       end
     end
