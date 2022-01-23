@@ -264,7 +264,7 @@ local function setTanks(fluid_name, in_use)
           for i = 1, count do
             if tanks[i] then
               tanks[i][5] = component.invoke(tanks[i][1], 'getFluidInTank',
-                                             tanks[i][2])[tanks[i][4]].amount
+                                             tanks[i][2])[tanks[i][3]].amount
             end
           end
           print('Entering "change mode"')
@@ -272,7 +272,7 @@ local function setTanks(fluid_name, in_use)
             for i = 1, count do
               if tanks[i] and tanks[i][5] ~= component.invoke(
                       tanks[i][1], 'getFluidInTank', tanks[i][2]
-              )[tanks[i][4]].amount then
+              )[tanks[i][3]].amount then
                 print('Selecting '..tankToStr(i, tanks[i]))
                 selectTank(i)
               end
