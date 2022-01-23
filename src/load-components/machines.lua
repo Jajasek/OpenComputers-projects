@@ -165,7 +165,7 @@ local function setTurbines()
 end
 
 local function getFluids(filter, in_use)
-  print('entering getFluids, in_use = '..serial.serialize(in_use))
+  -- print('entering getFluids, in_use = '..serial.serialize(in_use))
   local tank_controllers = component.list('tank_controller')
   local fluids = {}  -- addr, side, index, name, amount, capacity
   local monolithic = filter and true or false
@@ -174,8 +174,8 @@ local function getFluids(filter, in_use)
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
         local hash = table.concat({addr, side, index}, ',')
-        print('in_use["'..hash..'"] = '..tostring(in_use[hash]))
-        getInput(' ')
+        -- print('in_use["'..hash..'"] = '..tostring(in_use[hash]))
+        -- getInput(' ')
         if (not in_use[hash]) and (not filter or
                 not info[index].name or info[index].name == filter) then
           table.insert(fluids, {addr, side, index, info[index].name,
@@ -188,13 +188,17 @@ local function getFluids(filter, in_use)
   return fluids, monolithic
 end
 
+local function tankToStr(i, tank)
+  return '['..i..'] '..tank[1]..': '..tostring(tank[4])..' ('
+              ..tostring(tank[5])..'/'..tostring(tank[6])..')'
+end
+
 local function printTanks(tanks, count)
   local xRes, yRes = component.gpu.getResolution()
   local xCur, yCur = term.getCursor()
   for i = 1, count do
     if tanks[i] then
-      local addr, _, _, name, amount, capacity = table.unpack(tanks[i])
-      local str = '['..i..'] '..addr..': '..tostring(name)..' ('..tostring(amount)..'/'..tostring(capacity)..')'
+      local str = tankToStr(i, tanks[i])
       yCur = yCur + math.ceil(#str / xRes)
       if yCur > yRes then
         term.write("[Press any key to continue]")
@@ -230,6 +234,12 @@ local function setTanks(fluid_name, in_use)
                              data[3]})
     end
   else
+    local function selectTank(i)
+      local addr, side, index = table.unpack(tanks[i])
+      tanks[i] = nil
+      table.insert(addresses, {addr, side, index})
+      table.insert(proxies, {component.proxy(addr), side, index})
+    end
     -- term.clear()
     print(count..' possible '..fluid_name..' tanks were found. Type delimited '
           ..'list of indices to select some of them. Enter empty line to '
@@ -238,6 +248,7 @@ local function setTanks(fluid_name, in_use)
           ..'will be selected. Type "q" to quit.')
     printTanks(tanks, count)
     local cmd
+    local timer_id
     while cmd ~= '' do
       cmd = io.read()
       if string.lower(cmd) == 'q' then
@@ -245,14 +256,33 @@ local function setTanks(fluid_name, in_use)
       elseif string.lower(cmd) == 'l' then
         printTanks(tanks, count)
       elseif string.lower(cmd) == 'c' then
-        print('Not implemented')
+        if timer_id then
+          print('Leaving "change_mode"')
+          event.cancel(timer_id)
+          timer_id = nil
+        else
+          for i = 1, count do
+            if tanks[i] then
+              tanks[i][5] = component.invoke(tanks[i][1], 'getFluidInTank',
+                                             tanks[i][2])[tanks[i][4]].amount
+            end
+          end
+          print('Entering "change mode"')
+          timer_id = event.timer(1, function()
+            for i = 1, count do
+              if tanks[i] and tanks[i][5] ~= component.invoke(
+                      tanks[i][1], 'getFluidInTank', tanks[i][2]
+              )[tanks[i][4]].amount then
+                print('Selecting '..tankToStr(i, tanks[i]))
+                selectTank(i)
+              end
+            end
+          end, math.huge)
+        end
       else
         for selected in string.gmatch(cmd, '%d+') do
           if tanks[tonumber(selected)] then
-            local addr, side, index = table.unpack(tanks[tonumber(selected)])
-            tanks[tonumber(selected)] = nil
-            table.insert(addresses, {addr, side, index})
-            table.insert(proxies, {component.proxy(addr), side, index})
+            selectTank(tonumber(selected))
           end
         end
       end

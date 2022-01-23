@@ -9,14 +9,14 @@ local regulation = {DT = 0.01}  --when uptime() overflows, the old time is given
 
 function regulation.PID(process_var, control_var, setpoint, proportional_gain, integral_gain, derivative_gain, resolution, reversed)
   --[[
-    Standart (bounded) PID regulator. For details see https://en.wikipedia.org/wiki/PID_controller.
+    Standard (bounded) PID regulator. For details see https://en.wikipedia.org/wiki/PID_controller.
     
     process_var is a parameter-less function, control_var is function with one integer parameter in range(0, resolution + 1),
-    all other paameters are numbers.
+    all other parameters are numbers.
     resolution is optional integer parameter, defaulting to 100.
     reversed is optional boolean parameter. If true, the action will be reversed (e.g. higher control rod levels in a reactor (MV) decrease PV). Defaults to false.
     
-    The input range is given by process_var() and setpoint, but control_var only varies on the interval <0; 1> and this interval is
+    The input range is given by process_var() and setpoint, but control_var only varies on the interval [0; 1] and this interval is
     then projected to the range given by resolution. This should be taken into account when tuning K's.
   --]]
   
@@ -103,7 +103,7 @@ function regulation.PDM(process_var, control_var, setpoint, proportional_gain, d
     resolution is optional integer parameter, defaulting to 100.
     reversed is optional boolean parameter. If true, the action will be reversed (e.g. higher control rod levels in a reactor (MV) decrease PV). Defaults to false.
     
-    The input range is given by process_var() and setpoint, but control_var only varies on the interval <0; 1> and this interval is
+    The input range is given by process_var() and setpoint, but control_var only varies on the interval [0; 1] and this interval is
     then projected to the range given by resolution. This should be taken into account when tuning K's.
   --]]
   

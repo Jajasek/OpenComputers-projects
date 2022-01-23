@@ -1,6 +1,6 @@
 local t1 = require("loadComp").t1
 local t2 = require("loadComp").t2
-local t3 = require("loadcomp").t3
+local t3 = require("loadComp").t3
 local t = {t1, t2, t3}
 local g = require("graph")
 local graphs = {}
