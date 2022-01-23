@@ -211,7 +211,7 @@ local function printTanks(tanks, count)
 end
 
 local function setTanks(fluid_name, in_use)
-  print('Searching for tanks...')
+  print('Searching for '..fluid_name..' tanks...')
   local in_use_set = {}
   for _, data in ipairs(in_use or {}) do
     in_use_set[table.concat(data, ',')] = true
@@ -231,11 +231,13 @@ local function setTanks(fluid_name, in_use)
                              data[3]})
     end
   else
+    local selected_count = 0
     local function selectTank(i)
       local addr, side, index = table.unpack(tanks[i])
       tanks[i] = nil
       table.insert(addresses, {addr, side, index})
       table.insert(proxies, {component.proxy(addr), side, index})
+      selected_count = selected_count + 1
     end
     term.clear()
     print(count..' possible '..fluid_name..' tanks were found. Type delimited '
@@ -277,6 +279,10 @@ local function setTanks(fluid_name, in_use)
               selectTank(i)
             end
           end
+          if selected_count == count then
+            print('All available tanks were chosen.')
+            return addresses, proxies
+          end
         end
         print('Leaving "change_mode"')
       else
@@ -284,6 +290,10 @@ local function setTanks(fluid_name, in_use)
           if tanks[tonumber(selected)] then
             selectTank(tonumber(selected))
           end
+        end
+        if selected_count == count then
+          print('All available tanks were chosen.')
+          return addresses, proxies
         end
       end
     end
