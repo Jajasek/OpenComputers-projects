@@ -165,7 +165,6 @@ local function setTurbines()
 end
 
 local function getFluids(filter, in_use)
-  -- print('entering getFluids, in_use = '..serial.serialize(in_use))
   local tank_controllers = component.list('tank_controller')
   local fluids = {}  -- addr, side, index, name, amount, capacity
   local monolithic = filter and true or false
@@ -173,11 +172,9 @@ local function getFluids(filter, in_use)
     for side = 0, 5 do
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
-        local hash = table.concat({addr, side, index}, ',')
-        -- print('in_use["'..hash..'"] = '..tostring(in_use[hash]))
-        -- getInput(' ')
-        if (not in_use[hash]) and (not filter or
-                not info[index].name or info[index].name == filter) then
+        if (not in_use[table.concat({addr, side, index}, ',')]) and
+                (not filter or not info[index].name or
+                        info[index].name == filter) then
           table.insert(fluids, {addr, side, index, info[index].name,
                                 info[index].amount, info[index].capacity})
           if not info[index].name then monolithic = false end
@@ -240,7 +237,7 @@ local function setTanks(fluid_name, in_use)
       table.insert(addresses, {addr, side, index})
       table.insert(proxies, {component.proxy(addr), side, index})
     end
-    -- term.clear()
+    term.clear()
     print(count..' possible '..fluid_name..' tanks were found. Type delimited '
           ..'list of indices to select some of them. Enter empty line to '
           ..'submit. Use command "l" to list non-selected tanks and "c" to '
@@ -248,7 +245,6 @@ local function setTanks(fluid_name, in_use)
           ..'will be selected. Type "q" to quit.')
     printTanks(tanks, count)
     local cmd
-    local timer_id
     while cmd ~= '' do
       cmd = io.read()
       if string.lower(cmd) == 'q' then
@@ -256,29 +252,33 @@ local function setTanks(fluid_name, in_use)
       elseif string.lower(cmd) == 'l' then
         printTanks(tanks, count)
       elseif string.lower(cmd) == 'c' then
-        if timer_id then
-          print('Leaving "change_mode"')
-          event.cancel(timer_id)
-          timer_id = nil
-        else
+        for i = 1, count do
+          if tanks[i] then
+            tanks[i][5] = component.invoke(tanks[i][1], 'getFluidInTank',
+                                           tanks[i][2])[tanks[i][3]].amount
+          end
+        end
+        print('Entering "change mode"')
+        while true do
+          local _, _, code = event.pull(0.5, 'key_down')
+          cmd = code and string.lower(string.char(code))
+          if cmd == 'q' then
+            return
+          elseif cmd == 'l' then
+            printTanks(tanks, count)
+          elseif cmd == 'c' then
+            break
+          end
           for i = 1, count do
-            if tanks[i] then
-              tanks[i][5] = component.invoke(tanks[i][1], 'getFluidInTank',
-                                             tanks[i][2])[tanks[i][3]].amount
+            if tanks[i] and tanks[i][5] ~= component.invoke(
+                    tanks[i][1], 'getFluidInTank', tanks[i][2]
+            )[tanks[i][3]].amount then
+              print('Selecting '..tankToStr(i, tanks[i]))
+              selectTank(i)
             end
           end
-          print('Entering "change mode"')
-          timer_id = event.timer(1, function()
-            for i = 1, count do
-              if tanks[i] and tanks[i][5] ~= component.invoke(
-                      tanks[i][1], 'getFluidInTank', tanks[i][2]
-              )[tanks[i][3]].amount then
-                print('Selecting '..tankToStr(i, tanks[i]))
-                selectTank(i)
-              end
-            end
-          end, math.huge)
         end
+        print('Leaving "change_mode"')
       else
         for selected in string.gmatch(cmd, '%d+') do
           if tanks[tonumber(selected)] then
