@@ -7,8 +7,8 @@ Return table with proxies:
 The data is saved in a configuration file in the following format:
   .reactor: addr,
   .turbines: {addr1, addr2, ...},
-  .steam: {{addr1, side1, index1} = true, ...},
-  .water: {{addr1, side1, index1} = true, ...},
+  .steam: {{addr1, side1, index1}, ...},
+  .water: {{addr1, side1, index1}, ...},
   .pumps: ?
 If the configuration file does not exist, create new one:
   If there is more than one reactor or turbine, ask the user, which reactor

@@ -173,10 +173,10 @@ local function getFluids(filter, in_use)
     for side = 0, 5 do
       local info = component.invoke(addr, 'getFluidInTank', side)
       for index = 1, info.n do
-        local index_table = setmetatable({addr, side, index}, {__eq = function(a, b) return table.concat(a) == table.concat(b) end})
-        print('in_use['..serial.serialize({addr, side, index})..'] = '..tostring(in_use[index_table]))
+        local hash = table.concat({addr, side, index}, ',')
+        print('in_use["'..hash..'"] = '..tostring(in_use[hash]))
         getInput(' ')
-        if (not in_use[index_table]) and (not filter or
+        if (not in_use[hash]) and (not filter or
                 not info[index].name or info[index].name == filter) then
           table.insert(fluids, {addr, side, index, info[index].name,
                                 info[index].amount, info[index].capacity})
@@ -211,7 +211,11 @@ end
 
 local function setTanks(fluid_name, in_use)
   print('Searching for tanks...')
-  local tanks, nonempty = getFluids(fluid_name, in_use or {})
+  local in_use_set
+  for _, data in in_use do
+    in_use_set[table.concat(data, ',')] = true
+  end
+  local tanks, nonempty = getFluids(fluid_name, in_use_set)
   local count = #tanks
   if count == 0 then
     io.stderr:write('Error: no available '..fluid_name..' tanks')
@@ -221,7 +225,7 @@ local function setTanks(fluid_name, in_use)
   local proxies = {}
   if nonempty then
     for _, data in ipairs(tanks) do
-      addresses[{data[1], data[2], data[3]}] = true
+      table.insert(addresses, {data[1], data[2], data[3]})
       table.insert(proxies, {component.proxy(data[1]), data[2],
                              data[3]})
     end
@@ -246,7 +250,7 @@ local function setTanks(fluid_name, in_use)
         for selected in string.gmatch(cmd, '%d+') do
           local addr, side, index = table.unpack(tanks[tonumber(selected)])
           tanks[tonumber(selected)] = nil
-          addresses[{addr, side, index}] = true
+          table.insert(addresses, {addr, side, index})
           table.insert(proxies, {component.proxy(addr), side, index})
         end
       end
@@ -307,7 +311,7 @@ local function getConfig()
 
     if addresses.steam then
       proxies.steam = {}
-      for data, _ in pairs(addresses.steam) do
+      for _, data in ipairs(addresses.steam) do
         local addr, side, index = table.unpack(data)
         if component.type(addr) == 'tank_controller' then
           table.insert(proxies.steam,
@@ -335,7 +339,7 @@ local function getConfig()
 
     if addresses.water then
       proxies.water = {}
-      for data, _ in pairs(addresses.water) do
+      for _, data in ipairs(addresses.water) do
         local addr, side, index = table.unpack(data)
         if component.type(addr) == 'tank_controller' and
                 not addresses.steam[data] then
