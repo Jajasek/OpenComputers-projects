@@ -117,7 +117,7 @@ local function setTurbines()
     local addr = (available())
     return {addr}, {component.proxy(addr)}
   else
-    -- term.clear()
+    term.clear()
     print('There are '..n..' turbines. How many will be used?')
     local count = tonumber(io.read())
     if not count or count < 0 or count > n or count % 1 ~= 0 then
@@ -258,7 +258,7 @@ local function setTanks(fluid_name, in_use)
       return false
     end
 
-    -- term.clear()
+    term.clear()
     print(count..' possible '..fluid_name..' tanks were found. Type delimited '
           ..'list of indices to select some of them. Enter empty line to '
           ..'submit. Use command "l" to list non-selected tanks and "c" to '
@@ -314,7 +314,7 @@ local function setTanks(fluid_name, in_use)
       end
     end
   end
-  print('Inside setTanks: '..serial.serialize(addresses)..', '..serial.serialize(proxies))
+  -- print('Inside setTanks: '..serial.serialize(addresses)..', '..serial.serialize(proxies))
   return addresses, proxies
 end
 
@@ -374,13 +374,13 @@ local function getConfig()
   local set_functions = {
     reactor = setReactor,
     turbines = setTurbines,
-    steam = function() setTanks('steam', {}) end,
-    water = function(in_use) setTanks('water', in_use) end,
+    steam = function() return setTanks('steam', {}) end,
+    water = function(in_use) return setTanks('water', in_use) end,
     pumps = setPumps
   }
   local function set(type, ...)
     local a, p = set_functions[type](...)
-    print('set: '..serial.serialize(a)..', '..serial.serialize(p))
+    -- print('set: '..serial.serialize(a)..', '..serial.serialize(p))
     if a == -1 then
       proxies = nil
       return false
