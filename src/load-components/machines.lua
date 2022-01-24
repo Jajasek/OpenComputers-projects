@@ -244,6 +244,20 @@ local function setTanks(fluid_name, in_use)
       table.insert(proxies, {component.proxy(addr), side, index})
       selected_count = selected_count + 1
     end
+    local function updateTank(i)
+      if tanks[i] then
+        local new_info = component.invoke(
+            tanks[i][1], 'getFluidInTank', tanks[i][2])[tanks[i][3]]
+        if tanks[i][5] ~= new_info.amount or tanks[i][4] ~= new_info.name
+            or tanks[i][6] ~= new_info.capacity then
+          tanks[i][4], tanks[i][5], tanks[i][6] =
+              new_info.name, new_info.amount, new_info.capacity
+          return true
+        end
+      end
+      return false
+    end
+
     term.clear()
     print(count..' possible '..fluid_name..' tanks were found. Type delimited '
           ..'list of indices to select some of them. Enter empty line to '
@@ -256,33 +270,30 @@ local function setTanks(fluid_name, in_use)
       cmd = io.read()
       if string.lower(cmd) == 'q' then
         return -1
-      elseif string.lower(cmd) == 'l' then
+      end
+      for i = 1, count do
+        updateTank(i)
+      end
+      if string.lower(cmd) == 'l' then
         printTanks(tanks, count)
       elseif string.lower(cmd) == 'c' then
-        for i = 1, count do
-          if tanks[i] then
-            tanks[i][5] = component.invoke(tanks[i][1], 'getFluidInTank',
-                                           tanks[i][2])[tanks[i][3]].amount
-          end
-        end
         print('Entering "change mode"')
         while true do
           local _, _, code = event.pull(0.5, 'key_down')
           cmd = code and string.lower(string.char(code))
           if cmd == 'q' then
             return -1
-          elseif cmd == 'l' then
-            printTanks(tanks, count)
           elseif cmd == 'c' then
             break
           end
           for i = 1, count do
-            if tanks[i] and tanks[i][5] ~= component.invoke(
-                    tanks[i][1], 'getFluidInTank', tanks[i][2]
-            )[tanks[i][3]].amount then
+            if updateTank(i) then
               print('Selecting '..tankToStr(i, tanks[i]))
               selectTank(i)
             end
+          end
+          if cmd == 'l' then
+            printTanks(tanks, count)
           end
           if selected_count == count then
             print('All available tanks were chosen.')
