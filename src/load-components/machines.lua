@@ -55,9 +55,14 @@ local function setReactor()
   local available = component.list('br_reactor')
   local n = len(available)
   if n == 0 then
-    io.stderr:write('Error: no available reactor')
+    print('No available reactor.')
     return
-  elseif n == 1 then
+  end
+  print('Do you want to choose a reactor [y/n/q]?')
+  local cmd = getInput('ynq')
+  if cmd == 'n' then return end
+  if cmd == 'q' then return -1 end
+  if n == 1 then
     local addr = (available())
     return addr, component.proxy(addr)
   else
@@ -65,8 +70,8 @@ local function setReactor()
            ..'activated reactor, or [n] to activate another reactor. '
            ..'Press [q] to quit.')
     print('Press [s] to start...')
-    local cmd = getInput('sq')
-    if cmd == 'q' then return end
+    cmd = getInput('sq')
+    if cmd == 'q' then return -1 end
 
     while true do
       local i = 0
@@ -91,7 +96,7 @@ local function setReactor()
         if cmd == 'y' then
           return addr, reactor
         elseif cmd == 'q' then
-          return
+          return -1
         end
       end
     end
@@ -102,18 +107,22 @@ local function setTurbines()
   local available = component.list('br_turbine')
   local n = len(available)
   if n == 0 then
-    io.stderr:write('Error: no available turbine')
+    print('No available turbine.')
     return
   elseif n == 1 then
+    print('One turbine was found, do you want to use it [y/n/q]?')
+    local cmd = getInput('ynq')
+    if cmd == 'n' then return end
+    if cmd == 'q' then return -1 end
     local addr = (available())
     return {addr}, {component.proxy(addr)}
   else
     term.clear()
     print('There are '..n..' turbines. How many will be used?')
     local count = tonumber(io.read())
-    if not count or count <= 0 or count > n then
+    if not count or count < 0 or count > n or count % 1 ~= 0 then
       io.stderr:write('Error: illegal value')
-      return
+      return -1
     end
     local addresses = {}
     local proxies = {}
@@ -155,7 +164,7 @@ local function setTurbines()
             selected = true
             break
           elseif cmd == 'q' then
-            return
+            return -1
           end
         end
       end
@@ -314,12 +323,12 @@ local function getConfig()
   (function ()
     if (not addresses.reactor) or
             component.type(addresses.reactor) ~= 'br_reactor' then
-      local new = setReactor()
-      if not new then
+      local a, p = setReactor()
+      if a == -1 then
         proxies = nil
         return
       end
-      addresses.reactor, proxies.reactor = new
+      addresses.reactor, proxies.reactor = a, p
       save = true
     else
       proxies.reactor = component.proxy(addresses.reactor)
@@ -331,23 +340,23 @@ local function getConfig()
         if component.type(addr) == 'br_turbine' then
           table.insert(proxies.turbines, component.proxy(addr))
         else
-          local new = setTurbines()
-          if not new then
+          local a, p = setTurbines()
+          if a == -1 then
             proxies = nil
             return
           end
-          addresses.turbines, proxies.turbines = new
+          addresses.turbines, proxies.turbines = a, p
           save = true
           break
         end
       end
     else
-      local new = setTurbines()
-      if not new then
+      local a, p = setTurbines()
+      if a == -1 then
         proxies = nil
         return
       end
-      addresses.turbines, proxies.turbines = new
+      addresses.turbines, proxies.turbines = a, p
       save = true
     end
 
@@ -359,23 +368,23 @@ local function getConfig()
           table.insert(proxies.steam,
                        {component.proxy(addr), side, index})
         else
-          local new = setTanks('steam')
-          if not new then
+          local a, p = setTanks('steam')
+          if a == -1 then
             proxies = nil
             return
           end
-          addresses.steam, proxies.steam = new
+          addresses.steam, proxies.steam = a, p
           save = true
           break
         end
       end
     else
-      local new = setTanks('steam')
-      if not new then
+      local a, p = setTanks('steam')
+      if a == -1 then
         proxies = nil
         return
       end
-      addresses.steam, proxies.steam = new
+      addresses.steam, proxies.steam = a, p
       save = true
     end
 
@@ -388,23 +397,23 @@ local function getConfig()
           table.insert(proxies.water,
                        {component.proxy(addr), side, index})
         else
-          local new = setTanks('water', addresses.steam)
-          if not new then
+          local a, p = setTanks('water', addresses.steam)
+          if a == -1 then
             proxies = nil
             return
           end
-          addresses.water, proxies.water = new
+          addresses.water, proxies.water = a, p
           save = true
           break
         end
       end
     else
-      local new = setTanks('water', addresses.steam)
-      if not new then
+      local a, p = setTanks('water', addresses.steam)
+      if a == -1 then
         proxies = nil
         return
       end
-      addresses.water, proxies.water = new
+      addresses.water, proxies.water = a, p
       save = true
     end
   end)()
@@ -416,4 +425,4 @@ local function getConfig()
 end
 
 
-getConfig()
+return getConfig()
