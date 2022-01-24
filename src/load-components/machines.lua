@@ -369,8 +369,30 @@ local function getConfig()
     io.stderr:write('Error while trying to read configuration file')
     return
   end
+  local set = {}
 
-  local function set(type, ...)
+  set = setmetatable(
+      {
+        reactor = setReactor,
+        turbines = setTurbines,
+        steam = function(in_use) setTanks('steam', in_use) end,
+        water = function(in_use) setTanks('water', in_use) end,
+        pumps = setPumps,
+      },
+      {
+        __call = function(type, ...)
+          local a, p = set[type](...)
+          if a == -1 then
+            proxies = nil
+            return false
+          end
+          addresses[type], proxies[type] = a, p
+          save = true
+          return true
+        end
+      }
+  )
+  --[[local function set(type, ...)
     local a, p = set[type](...)
     if a == -1 then
       proxies = nil
@@ -384,7 +406,7 @@ local function getConfig()
   set.turbines = setTurbines
   set.steam = function(in_use) setTanks('steam', in_use) end
   set.water = function(in_use) setTanks('water', in_use) end
-  set.pumps = setPumps
+  set.pumps = setPumps]]
 
   (function ()
     if (not addresses.reactor) or
