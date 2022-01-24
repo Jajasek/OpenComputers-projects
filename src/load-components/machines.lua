@@ -5,6 +5,7 @@ local event = require('event')
 local term = require("term")
 
 local PATH = '/etc/machines.cfg'
+local directions = {[0] = 'down', 'up', 'north', 'south', 'west', 'east'}
 
 
 local function len(table)
@@ -70,8 +71,7 @@ local function setReactor()
            ..'activated reactor, or [n] to activate another reactor. '
            ..'Press [q] to quit.')
     print('Press [s] to start...')
-    cmd = getInput('sq')
-    if cmd == 'q' then return -1 end
+    if getInput('sq') == 'q' then return -1 end
 
     while true do
       local i = 0
@@ -195,8 +195,8 @@ local function getFluids(filter, in_use)
 end
 
 local function tankToStr(i, tank)
-  return '['..i..'] '..tank[1]..': '..tostring(tank[4])..' ('
-              ..tostring(tank[5])..'/'..tostring(tank[6])..')'
+  return '['..i..'] '..tank[1]..' ('..directions[tank[2]]..'): '..
+      tostring(tank[4])..' ('..tostring(tank[5])..'/'..tostring(tank[6])..')'
 end
 
 local function printTanks(tanks, count)
@@ -315,6 +315,50 @@ local function setTanks(fluid_name, in_use)
     end
   end
   return addresses, proxies
+end
+
+local function setPumps()
+  local redstone_blocks = component.list('redstone')
+  if #redstone_blocks == 0 then
+    print('No available redstone block.')
+    return {}, {}
+  end
+  print(#redstone_blocks..' redstone blocks are available. Change the input '
+            ..'value of the sides you want to be used to control the water '
+            ..'pumps. Press [Enter] to submit and [q] to quit.')
+  print('Press [s] to start...')
+  if getInput('sq') == 'q' then return -1 end
+  local redstone_input = {}
+  local i = 0
+  for addr, _ in redstone_blocks do
+    i = i + 1
+    redstone_blocks[addr] = {}
+    redstone_blocks[i] = component.proxy(addr)
+    redstone_input[i] = redstone_blocks[i].getInput()
+  end
+  local addresses = {}
+  local proxies = {}
+  while true do
+    local _, _, code = event.pull(0.2, 'key_down')
+    local cmd = code and string.lower(string.char(code))
+    if cmd == 'q' then
+      return -1
+    elseif cmd == '\r' then
+      return addresses, proxies
+    end
+    for j, redstone_block in ipairs(redstone_blocks) do
+      local new = redstone_block.getInput()
+      for s = 0, 5 do
+        if not redstone_blocks[redstone_block.address][s] and
+            new[s] ~= redstone_input[j][s] then
+          print('Selecting '..redstone_block.address..' ('..directions[s]..')')
+          redstone_blocks[redstone_block.address][s] = true
+          table.insert(addresses, {redstone_block.address, s})
+          table.insert(proxies, {redstone_block, s})
+        end
+      end
+    end
+  end
 end
 
 local function getConfig()
