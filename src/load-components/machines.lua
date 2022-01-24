@@ -370,8 +370,15 @@ local function getConfig()
     return
   end
 
+  local set_functions = {
+    reactor = setReactor,
+    turbines = setTurbines,
+    steam = function(in_use) setTanks('steam', in_use) end,
+    water = function(in_use) setTanks('water', in_use) end,
+    pumps = setPumps
+  }
   local function set(type, ...)
-    local a, p = set[type](...)
+    local a, p = set_functions[type](...)
     if a == -1 then
       proxies = nil
       return false
@@ -380,11 +387,6 @@ local function getConfig()
     save = true
     return true
   end
-  set.reactor = setReactor
-  set.turbines = setTurbines
-  set.steam = function(in_use) setTanks('steam', in_use) end
-  set.water = function(in_use) setTanks('water', in_use) end
-  set.pumps = setPumps
 
   (function ()
     if (not addresses.reactor) or
