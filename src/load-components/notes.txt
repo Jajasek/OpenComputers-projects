@@ -3,13 +3,13 @@ Return table with proxies:
   .turbines: {proxy1, proxy2, ...},
   .steam: {{proxy1, side1, index1}, ...},
   .water: {{proxy1, side1, index1}, ...},
-  .pumps: ?
+  .pumps: {{proxy1, side1}, ...}
 The data is saved in a configuration file in the following format:
   .reactor: addr,
   .turbines: {addr1, addr2, ...},
   .steam: {{addr1, side1, index1}, ...},
   .water: {{addr1, side1, index1}, ...},
-  .pumps: ?
+  .pumps: {{addr1, side1}, ...}
 If the configuration file does not exist, create new one:
   If there is more than one reactor or turbine, ask the user, which reactor
     to choose and how many turbines to choose and how to arrange them

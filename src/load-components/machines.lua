@@ -221,15 +221,11 @@ end
 
 local function setTanks(fluid_name, in_use)
   print('Searching for '..fluid_name..' tanks...')
-  local in_use_set = {}
-  for _, data in ipairs(in_use or {}) do
-    in_use_set[table.concat(data, ',')] = true
-  end
-  local tanks, nonempty = getFluids(fluid_name, in_use_set)
+  local tanks, nonempty = getFluids(fluid_name, in_use)
   local count = #tanks
   if count == 0 then
-    io.stderr:write('Error: no available '..fluid_name..' tanks')
-    return
+    print('No available '..fluid_name..' tanks.')
+    return {}, {}
   end
   local addresses = {}
   local proxies = {}
@@ -259,7 +255,7 @@ local function setTanks(fluid_name, in_use)
     while cmd ~= '' do
       cmd = io.read()
       if string.lower(cmd) == 'q' then
-        return
+        return -1
       elseif string.lower(cmd) == 'l' then
         printTanks(tanks, count)
       elseif string.lower(cmd) == 'c' then
@@ -274,7 +270,7 @@ local function setTanks(fluid_name, in_use)
           local _, _, code = event.pull(0.5, 'key_down')
           cmd = code and string.lower(string.char(code))
           if cmd == 'q' then
-            return
+            return -1
           elseif cmd == 'l' then
             printTanks(tanks, count)
           elseif cmd == 'c' then
@@ -319,16 +315,33 @@ local function getConfig()
     return
   end
 
+  local function set(type, ...)
+    local a, p = set[type](...)
+    if a == -1 then
+      proxies = nil
+      return false
+    end
+    addresses[type], proxies[type] = a, p
+    save = true
+    return true
+  end
+  set.reactor = setReactor
+  set.turbines = setTurbines
+  set.steam = function(in_use) setTanks('steam', in_use) end
+  set.water = function(in_use) setTanks('water', in_use) end
+  set.pumps = setPumps
+
   (function ()
     if (not addresses.reactor) or
             component.type(addresses.reactor) ~= 'br_reactor' then
-      local a, p = setReactor()
-      if a == -1 then
-        proxies = nil
-        return
-      end
-      addresses.reactor, proxies.reactor = a, p
-      save = true
+      if not set('reactor') then return end
+      --local a, p = setReactor()
+      --if a == -1 then
+      --  proxies = nil
+      --  return
+      --end
+      --addresses.reactor, proxies.reactor = a, p
+      --save = true
     else
       proxies.reactor = component.proxy(addresses.reactor)
     end
@@ -339,24 +352,26 @@ local function getConfig()
         if component.type(addr) == 'br_turbine' then
           table.insert(proxies.turbines, component.proxy(addr))
         else
-          local a, p = setTurbines()
+          if not set('turbines') then return end
+          --[[local a, p = setTurbines()
           if a == -1 then
             proxies = nil
             return
           end
           addresses.turbines, proxies.turbines = a, p
-          save = true
+          save = true]]
           break
         end
       end
     else
-      local a, p = setTurbines()
+      if not set('turbines') then return end
+      --[[local a, p = setTurbines()
       if a == -1 then
         proxies = nil
         return
       end
       addresses.turbines, proxies.turbines = a, p
-      save = true
+      save = true]]
     end
 
     if addresses.steam then
@@ -367,53 +382,90 @@ local function getConfig()
           table.insert(proxies.steam,
                        {component.proxy(addr), side, index})
         else
-          local a, p = setTanks('steam')
+          if not set('steam') then return end
+          --[[local a, p = setTanks('steam')
           if a == -1 then
             proxies = nil
             return
           end
           addresses.steam, proxies.steam = a, p
-          save = true
+          save = true]]
           break
         end
       end
     else
-      local a, p = setTanks('steam')
+      if not set('steam') then return end
+      --[[local a, p = setTanks('steam')
       if a == -1 then
         proxies = nil
         return
       end
       addresses.steam, proxies.steam = a, p
-      save = true
+      save = true]]
     end
 
+    local in_use = {}
+    for _, data in ipairs(addresses.steam) do
+      in_use[table.concat(data, ',')] = true
+    end
     if addresses.water then
       proxies.water = {}
       for _, data in ipairs(addresses.water) do
         local addr, side, index = table.unpack(data)
         if component.type(addr) == 'tank_controller' and
-                not addresses.steam[data] then
+                not in_use[table.concat(data, ',')] then
           table.insert(proxies.water,
                        {component.proxy(addr), side, index})
         else
-          local a, p = setTanks('water', addresses.steam)
+          if not set('water', in_use) then return end
+          --[[local a, p = setTanks('water', in_use)
           if a == -1 then
             proxies = nil
             return
           end
           addresses.water, proxies.water = a, p
-          save = true
+          save = true]]
           break
         end
       end
     else
-      local a, p = setTanks('water', addresses.steam)
+      if not set('water', in_use) then return end
+      --[[local a, p = setTanks('water', in_use)
       if a == -1 then
         proxies = nil
         return
       end
       addresses.water, proxies.water = a, p
-      save = true
+      save = true]]
+    end
+
+    if addresses.pumps then
+      proxies.pumps = {}
+      for _, data in ipairs(addresses.pumps) do
+        local addr, side = table.unpack(data)
+        if component.type(addr) == 'redstone' then
+          table.insert(proxies.pumps, {component.proxy(addr), side})
+        else
+          if not set('pumps') then return end
+          --[[local a, p = setPumps()
+          if a == -1 then
+            proxies = nil
+            return
+          end
+          addresses.pumps, proxies.pumps = a, p
+          save = true]]
+          break
+        end
+      end
+    else
+      if not set('pumps') then return end
+      --[[local a, p = setPumps()
+      if a == -1 then
+        proxies = nil
+        return
+      end
+      addresses.pumps, proxies.pumps = a, p
+      save = true]]
     end
   end)()
 
