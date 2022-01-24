@@ -373,7 +373,7 @@ local function getConfig()
   local set_functions = {
     reactor = setReactor,
     turbines = setTurbines,
-    steam = function(in_use) setTanks('steam', in_use) end,
+    steam = function() setTanks('steam', {}) end,
     water = function(in_use) setTanks('water', in_use) end,
     pumps = setPumps
   }
