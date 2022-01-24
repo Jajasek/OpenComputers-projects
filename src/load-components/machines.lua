@@ -312,7 +312,6 @@ end
 
 local function getConfig()
   local addresses = loadConfig()
-  print(serial.serialize(addresses))
   local proxies = {}
   local save = false
   if not addresses then
