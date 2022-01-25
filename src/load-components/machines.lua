@@ -2,7 +2,7 @@ local serial = require('serialization')
 local fs = require('filesystem')
 local component = require('component')
 local event = require('event')
-local term = require("term")
+local term = require('term')
 
 local PATH = '/etc/machines.cfg'
 local directions = {[0] = 'down', 'up', 'north', 'south', 'west', 'east'}
@@ -39,10 +39,10 @@ local function loadConfig()
   end
   local file, msg = io.open(PATH,'rb')
   if not file then
-    io.stderr:write("Error while trying to read file at "..PATH..": "..msg)
+    io.stderr:write('Error while trying to read file at '..PATH..': '..msg)
     return
   end
-  local sConfig = file:read("*a")
+  local sConfig = file:read('*a')
   file:close()
   return serial.unserialize(sConfig)
 end
@@ -216,8 +216,8 @@ local function printTanks(tanks, count)
       local str = tankToStr(i, tanks[i])
       yCur = yCur + math.ceil(#str / xRes)
       if yCur > yRes then
-        term.write("[Press any key to continue]")
-        if event.pull("key_down") then
+        term.write('[Press any key to continue]')
+        if event.pull('key_down') then
           term.clear()
           xCur, yCur = term.getCursor()
           yCur = yCur + math.ceil(#str / xRes)
