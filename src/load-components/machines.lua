@@ -8,6 +8,15 @@ local PATH = '/etc/machines.cfg'
 local directions = {[0] = 'down', 'up', 'north', 'south', 'west', 'east'}
 
 
+local first_print = false
+local function varprint(...)
+  if not first_print then
+    first_print = true
+    print('Reconfiguring...')
+  end
+  print(...)
+end
+
 local function len(table)
   local count = 0
   for _ in pairs(table) do count = count + 1 end
@@ -56,10 +65,10 @@ local function setReactor()
   local available = component.list('br_reactor')
   local n = len(available)
   if n == 0 then
-    print('No available reactor.')
+    varprint('No available reactor.')
     return
   end
-  print('Do you want to choose a reactor [y/n/q]?')
+  varprint('Do you want to choose a reactor [y/n/q]?')
   local cmd = getInput('ynq')
   if cmd == 'n' then return end
   if cmd == 'q' then return -1 end
@@ -67,10 +76,10 @@ local function setReactor()
     local addr = (available())
     return addr, component.proxy(addr)
   else
-    print(n..' reactors are available. Press [y] to choose the currently '
+    varprint(n..' reactors are available. Press [y] to choose the currently '
            ..'activated reactor, or [n] to activate another reactor. '
            ..'Press [q] to quit.')
-    print('Press [s] to start...')
+    varprint('Press [s] to start...')
     if getInput('sq') == 'q' then return -1 end
 
     while true do
@@ -85,7 +94,7 @@ local function setReactor()
         reactor.setActive(true)
 
         i = i + 1
-        print('['..i..'/'..n..']')
+        varprint('['..i..'/'..n..']')
         cmd = getInput('ynq')
 
         reactor.setActive(false)
@@ -107,10 +116,10 @@ local function setTurbines()
   local available = component.list('br_turbine')
   local n = len(available)
   if n == 0 then
-    print('No available turbine.')
+    varprint('No available turbine.')
     return
   elseif n == 1 then
-    print('One turbine was found, do you want to use it [y/n/q]?')
+    varprint('One turbine was found, do you want to use it [y/n/q]?')
     local cmd = getInput('ynq')
     if cmd == 'n' then return end
     if cmd == 'q' then return -1 end
@@ -118,7 +127,7 @@ local function setTurbines()
     return {addr}, {component.proxy(addr)}
   else
     term.clear()
-    print('There are '..n..' turbines. How many will be used?')
+    varprint('There are '..n..' turbines. How many will be used?')
     local count = tonumber(io.read())
     if not count or count < 0 or count > n or count % 1 ~= 0 then
       io.stderr:write('Error: illegal value')
@@ -135,7 +144,7 @@ local function setTurbines()
         end
         break
       end
-      print('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
+      varprint('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
           ..'available. Press [y] to choose the activated turbine, or [n] '
           ..'to activate another turbine. Press [q] to quit.')
       local selected = false
@@ -150,7 +159,7 @@ local function setTurbines()
           turbine.setActive(true)
 
           j = j + 1
-          print('['..j..'/'..(n - i + 1)..']')
+          varprint('['..j..'/'..(n - i + 1)..']')
           local cmd = getInput('ynq')
 
           turbine.setActive(false)
@@ -220,11 +229,11 @@ local function printTanks(tanks, count)
 end
 
 local function setTanks(fluid_name, in_use)
-  print('Searching for '..fluid_name..' tanks...')
+  varprint('Searching for '..fluid_name..' tanks...')
   local tanks, nonempty = getFluids(fluid_name, in_use)
   local count = #tanks
   if count == 0 then
-    print('No available '..fluid_name..' tanks.')
+    varprint('No available '..fluid_name..' tanks.')
     return {}, {}
   end
   local addresses = {}
@@ -259,11 +268,11 @@ local function setTanks(fluid_name, in_use)
     end
 
     term.clear()
-    print(count..' possible '..fluid_name..' tanks were found. Type delimited '
-          ..'list of indices to select some of them. Enter empty line to '
-          ..'submit. Use command "l" to list non-selected tanks and "c" to '
-          ..'toggle "change mode" - tanks that change the amount of liquid '
-          ..'will be selected. Type "q" to quit.')
+    varprint(count..' possible '..fluid_name..' tanks were found. Type '
+                 ..'delimited list of indices to select some of them. Enter '
+                 ..'empty line to submit. Use command "l" to list non-selected '
+                 ..'tanks and "c" to toggle "change mode" - tanks that change '
+                 ..'the amount of liquid will be selected. Type "q" to quit.')
     printTanks(tanks, count)
     local cmd
     while cmd ~= '' do
@@ -277,7 +286,7 @@ local function setTanks(fluid_name, in_use)
       if string.lower(cmd) == 'l' then
         printTanks(tanks, count)
       elseif string.lower(cmd) == 'c' then
-        print('Entering "change mode"')
+        varprint('Entering "change mode"')
         while true do
           local _, _, code = event.pull(0.5, 'key_down')
           cmd = code and string.lower(string.char(code))
@@ -288,7 +297,7 @@ local function setTanks(fluid_name, in_use)
           end
           for i = 1, count do
             if updateTank(i) then
-              print('Selecting '..tankToStr(i, tanks[i]))
+              varprint('Selecting '..tankToStr(i, tanks[i]))
               selectTank(i)
             end
           end
@@ -296,11 +305,11 @@ local function setTanks(fluid_name, in_use)
             printTanks(tanks, count)
           end
           if selected_count == count then
-            print('All available tanks were chosen.')
+            varprint('All available tanks were chosen.')
             return addresses, proxies
           end
         end
-        print('Leaving "change_mode"')
+        varprint('Leaving "change_mode"')
       else
         for selected in string.gmatch(cmd, '%d+') do
           if tanks[tonumber(selected)] then
@@ -308,26 +317,25 @@ local function setTanks(fluid_name, in_use)
           end
         end
         if selected_count == count then
-          print('All available tanks were chosen.')
+          varprint('All available tanks were chosen.')
           return addresses, proxies
         end
       end
     end
   end
-  -- print('Inside setTanks: '..serial.serialize(addresses)..', '..serial.serialize(proxies))
   return addresses, proxies
 end
 
 local function setPumps()
   local redstone_blocks = component.list('redstone')
   if #redstone_blocks == 0 then
-    print('No available redstone block.')
+    varprint('No available redstone block.')
     return {}, {}
   end
-  print(#redstone_blocks..' redstone blocks are available. Change the input '
+  varprint(#redstone_blocks..' redstone blocks are available. Change the input '
             ..'value of the sides you want to be used to control the water '
             ..'pumps. Press [Enter] to submit and [q] to quit.')
-  print('Press [s] to start...')
+  varprint('Press [s] to start...')
   if getInput('sq') == 'q' then return -1 end
   local redstone_input = {}
   local i = 0
@@ -352,7 +360,8 @@ local function setPumps()
       for s = 0, 5 do
         if not redstone_blocks[redstone_block.address][s] and
             new[s] ~= redstone_input[j][s] then
-          print('Selecting '..redstone_block.address..' ('..directions[s]..')')
+          varprint('Selecting '..redstone_block.address..' ('..directions[s]
+                       ..')')
           redstone_blocks[redstone_block.address][s] = true
           table.insert(addresses, {redstone_block.address, s})
           table.insert(proxies, {redstone_block, s})
@@ -380,7 +389,6 @@ local function getConfig()
   }
   local function set(type, ...)
     local a, p = set_functions[type](...)
-    -- print('set: '..serial.serialize(a)..', '..serial.serialize(p))
     if a == -1 then
       proxies = nil
       return false
@@ -394,13 +402,6 @@ local function getConfig()
     if (not addresses.reactor) or
             component.type(addresses.reactor) ~= 'br_reactor' then
       if not set('reactor') then return end
-      --local a, p = setReactor()
-      --if a == -1 then
-      --  proxies = nil
-      --  return
-      --end
-      --addresses.reactor, proxies.reactor = a, p
-      --save = true
     else
       proxies.reactor = component.proxy(addresses.reactor)
     end
@@ -412,25 +413,11 @@ local function getConfig()
           table.insert(proxies.turbines, component.proxy(addr))
         else
           if not set('turbines') then return end
-          --[[local a, p = setTurbines()
-          if a == -1 then
-            proxies = nil
-            return
-          end
-          addresses.turbines, proxies.turbines = a, p
-          save = true]]
           break
         end
       end
     else
       if not set('turbines') then return end
-      --[[local a, p = setTurbines()
-      if a == -1 then
-        proxies = nil
-        return
-      end
-      addresses.turbines, proxies.turbines = a, p
-      save = true]]
     end
 
     if addresses.steam then
@@ -442,25 +429,11 @@ local function getConfig()
                        {component.proxy(addr), side, index})
         else
           if not set('steam') then return end
-          --[[local a, p = setTanks('steam')
-          if a == -1 then
-            proxies = nil
-            return
-          end
-          addresses.steam, proxies.steam = a, p
-          save = true]]
           break
         end
       end
     else
       if not set('steam') then return end
-      --[[local a, p = setTanks('steam')
-      if a == -1 then
-        proxies = nil
-        return
-      end
-      addresses.steam, proxies.steam = a, p
-      save = true]]
     end
 
     local in_use = {}
@@ -477,25 +450,11 @@ local function getConfig()
                        {component.proxy(addr), side, index})
         else
           if not set('water', in_use) then return end
-          --[[local a, p = setTanks('water', in_use)
-          if a == -1 then
-            proxies = nil
-            return
-          end
-          addresses.water, proxies.water = a, p
-          save = true]]
           break
         end
       end
     else
       if not set('water', in_use) then return end
-      --[[local a, p = setTanks('water', in_use)
-      if a == -1 then
-        proxies = nil
-        return
-      end
-      addresses.water, proxies.water = a, p
-      save = true]]
     end
 
     if addresses.pumps then
@@ -506,25 +465,11 @@ local function getConfig()
           table.insert(proxies.pumps, {component.proxy(addr), side})
         else
           if not set('pumps') then return end
-          --[[local a, p = setPumps()
-          if a == -1 then
-            proxies = nil
-            return
-          end
-          addresses.pumps, proxies.pumps = a, p
-          save = true]]
           break
         end
       end
     else
       if not set('pumps') then return end
-      --[[local a, p = setPumps()
-      if a == -1 then
-        proxies = nil
-        return
-      end
-      addresses.pumps, proxies.pumps = a, p
-      save = true]]
     end
   end)()
 
