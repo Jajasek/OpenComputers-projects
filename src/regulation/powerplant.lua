@@ -3,9 +3,7 @@
 local machines = require('machines')
 local regulation = require('regulation')
 local event = require('event')
-local keyboard = require('keyboard')
 local modem = require('component').modem
-local sides = require('sides')
 
 local target_t = {}
 local enable_coil = {}
@@ -171,6 +169,7 @@ local function change_mode_turbine(key)
     target_t[1] = 900
   end
   enable_coil[1] = mode_tn ~= 0
+  regulators_t[1].set_setpoint(target_t[1])
   for i = 2, #machines.turbines do
     if i > mode_tn + 1 then
       target_t[i] = 60
