@@ -335,6 +335,8 @@ local function setPumps()
   varprint(#redstone_blocks..' redstone blocks are available. Change the input '
             ..'value of the sides you want to be used to control the water '
             ..'pumps. Press [Enter] to submit and [q] to quit.')
+  varprint('Before selecting, you can change the polarity used to turn on the '
+           ..'pumps using [+] and [-]. Current turn-on polarity: OFF')
   varprint('Press [s] to start...')
   if getInput('sq') == 'q' then return -1 end
   local redstone_input = {}
@@ -347,11 +349,18 @@ local function setPumps()
   end
   local addresses = {}
   local proxies = {}
+  local polarity = false
   while true do
     local _, _, code = event.pull(0.2, 'key_down')
     local cmd = code and string.lower(string.char(code))
     if cmd == 'q' then
       return -1
+    elseif cmd == '-' then
+      polarity = false
+      varprint('Current turn-on polarity: OFF')
+    elseif cmd == '+' then
+      polarity = true
+      varprint('Current turn-on polarity: ON')
     elseif cmd == '\r' then
       return addresses, proxies
     end
@@ -363,8 +372,8 @@ local function setPumps()
           varprint('Selecting '..redstone_block.address..' ('..directions[s]
                        ..')')
           redstone_blocks[redstone_block.address][s] = true
-          table.insert(addresses, {redstone_block.address, s})
-          table.insert(proxies, {redstone_block, s})
+          table.insert(addresses, {redstone_block.address, s, polarity})
+          table.insert(proxies, {redstone_block, s, polarity})
         end
       end
     end
