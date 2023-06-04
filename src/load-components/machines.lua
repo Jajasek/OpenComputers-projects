@@ -61,6 +61,26 @@ local function saveConfig(config)
 end
 
 
+local function setScreens()
+  local available_gpus = component.list('gpu')
+  local available_screens = component.list('screen')
+  local n = math.min(len(available_gpus), len(available_screens))
+  if n == 0 then
+    varprint('No available gpu/screen.')
+    return
+  end
+  --Temporary solution. Ideally, the system should try all possible combinations
+  --and choose bindings such that maximum potential is reached (check with
+  --gpu.maxResolution(), because there is no way to distinguish tiers). If a
+  --combination has to be suboptimal, ask the user which one.
+  if n == 1 then
+    local addr_gpu = (available_gpus())
+    local addr_screen = (available_screens())
+    return {addr_gpu}, {component.proxy(addr_gpu)}, {addr_screen},
+      {component.proxy(addr_screen)}
+  end
+end
+
 local function setReactor()
   local available = component.list('br_reactor')
   local n = len(available)
@@ -406,8 +426,38 @@ local function getConfig()
     save = true
     return true
   end
+  local function setGpusScreens()
+    local ag, pg, as, ps = setScreens()
+    if ag == -1 then
+      proxies = nil
+      return false
+    end
+    addresses.gpus, proxies.gpus = ag, pg
+    addresses.screens, proxies.screens = as, ps
+    save = true
+    return true
+  end
 
   (function ()
+    if addresses.screens and addresses.gpus and
+        len(addresses.screens) == len(addresses.gpus) then
+      for i, addr_gpu in ipairs(addresses.gpus) do
+        local addr_screen = addresses.screens[i]
+        if component.type(addr_gpu) == 'gpu' and
+            component.type(addr_screen) == 'screen' then
+          local gpu = component.proxy(addr_gpu)
+          gpu.bind(addr_screen)
+          table.insert(proxies.gpus, gpu)
+          table.insert(proxies.screens, component.proxy(addr_screen))
+        else
+          if not setGpusScreens() then return end
+          break
+        end
+      end
+    else
+      if not setGpusScreens() then return end
+    end
+
     if (not addresses.reactor) or
             component.type(addresses.reactor) ~= 'br_reactor' then
       if not set('reactor') then return end
