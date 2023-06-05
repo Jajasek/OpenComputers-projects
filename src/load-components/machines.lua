@@ -152,8 +152,10 @@ local function setScreens()
     local gpu = component.proxy((available_gpus()))
     local addr_screen = available_screens()
     gpu.bind(addr_screen)
-    local bc, bp = gpu.setBackground(0xFFFFFF, false)
-    local fc, fp = gpu.setForeground(0, false)
+    local bc, bp = gpu.getBackground()
+    gpu.setBackground(0xFFFFFF, false)
+    local fc, fp = gpu.getForeground()
+    gpu.setForeground(0, false)
     local width, height = gpu.getResolution()
     gpu.fill(1, 1, width, height, ' ')
     setting_old[addr_screen] = {bc, bp, fc, fp}
@@ -183,7 +185,7 @@ local function setScreens()
     component.setPrimary('screen', addr_screen)
   end
   for i, addr_screen in pairs(addresses_screen) do
-    local bc, bp, fc, fp = setting_old[addr_screen]
+    local bc, bp, fc, fp = table.unpack(setting_old[addr_screen])
     local gpu = proxies_gpu[i]
     gpu.setBackground(bc, bp)
     gpu.setForeground(fc, fp)
