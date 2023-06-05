@@ -133,6 +133,7 @@ local function setScreens()
   --gpu.maxResolution(), because there is no way to distinguish tiers). If a
   --combination has to be suboptimal, ask the user which one.
   if n == 1 then
+    varprint('One gpu-screen pair available.')
     local addr_gpu = (available_gpus())
     local addr_screen = (available_screens())
     local gpu = component.proxy(addr_gpu)
@@ -260,7 +261,6 @@ local function setTurbines()
     local addr = (available())
     return {addr}, {component.proxy(addr)}
   end
-  term.clear()
   varprint('There are '..n..' turbines. How many will be used?')
   local count = tonumber(io.read())
   if not count or count < 0 or count > n or count % 1 ~= 0 then
@@ -377,6 +377,7 @@ local function setTanks(fluid_name, in_use)
       table.insert(proxies, {component.proxy(data[1]), data[2],
                              data[3]})
     end
+    varprint('Done.')
   else
     local selected_count = 0
     local function selectTank(i)
@@ -400,7 +401,6 @@ local function setTanks(fluid_name, in_use)
       return false
     end
 
-    term.clear()
     varprint(count..' possible '..fluid_name..' tanks were found. Type '
                  ..'delimited list of indices to select some of them. Enter '
                  ..'empty line to submit. Use command [l] to list non-selected '
@@ -465,9 +465,9 @@ local function setPumps()
     varprint('No available redstone block.')
     return {}, {}
   end
-  varprint(#redstone_blocks..' redstone blocks are available. Change the input '
-            ..'value of the sides you want to be used to control the water '
-            ..'pumps. Press [Enter] to submit and [q] to quit.')
+  varprint(#redstone_blocks..' redstone block(s) is(are) available. Change the '
+            ..'input value of the sides you want to be used to control the '
+            ..'water pumps. Press [Enter] to submit and [q] to quit.')
   varprint('Before selecting, you can change the polarity used to turn on the '
            ..'pumps using [+] and [-]. Current turn-on polarity: OFF')
   varprint('Press [s] to start...')
