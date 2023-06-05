@@ -1,5 +1,3 @@
--- local r, t1, t2, t3, s1, s2, w = table.unpack(require('loadComp'))
--- local t = {t1, t2, t3}
 local machines = require('machines')
 local regulation = require('regulation')
 local event = require('event')

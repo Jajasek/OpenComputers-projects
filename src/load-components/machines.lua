@@ -1,3 +1,13 @@
+--[[
+Provides machines.gpus      = {gpu1, ...}
+                 .screens   = {screen1, ...}
+                 .reactor
+                 .turbines  = {turbine1, ...}
+                 .steam     = {{tank1, side1, index1}, ...}
+                 .water     = {{tank1, side1, index1}, ...}
+                 .pumps     = {{redstone_block1, side1}, ...}
+]]--
+
 local serial = require('serialization')
 local fs = require('filesystem')
 local component = require('component')
