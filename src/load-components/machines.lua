@@ -61,6 +61,65 @@ local function saveConfig(config)
 end
 
 
+local function bigPrint(gpu, index)
+  local digits = {
+    {
+      '       ▄██',
+      '     ▄████',
+      '  ▄▄██▀███',
+      '  █▀▀  ███',
+      '       ███',
+      '       ███',
+      '       ███',
+      '       ███',
+      '       ███',
+      '       ███',
+      '       ███'
+    },
+    {
+      '  ▄▄██████▄▄  ',
+      ' ████▀▀▀▀████ ',
+      '███       ▀███',
+      '           ███',
+      '          ▄██▀',
+      '        ▄███  ',
+      '      ▄███▀   ',
+      '    ▄██▀▀     ',
+      '  ▄██▀        ',
+      ' ███▄▄▄▄▄▄▄▄▄▄',
+      '██████████████'
+    },
+    {
+      '  ▄▄██████▄▄   ',
+      ' ████▀▀▀▀▀███▄ ',
+      '███▀       ███ ',
+      '         ▄▄██▀ ',
+      '      ██████   ',
+      '      ▀▀▀▀███▄ ',
+      '           ▀███',
+      '            ███',
+      '███▄       ▄██▀',
+      ' ████▄▄▄▄▄███▀ ',
+      '  ▀▀██████▀▀   '
+    },
+    {
+      '          ▄██  ',
+      '        ▄████  ',
+      '       ██████  ',
+      '     ▄██▀ ███  ',
+      '    ███   ███  ',
+      '  ▄██▀    ███  ',
+      '▄██▀      ███  ',
+      '███████████████',
+      '▀▀▀▀▀▀▀▀▀▀███▀▀',
+      '          ███  ',
+      '          ███  '
+    }
+  }
+  for i, line in ipairs(digits[index]) do
+    gpu.set(5, i + 4, line)
+  end
+end
 local function setScreens()
   local available_gpus = component.list('gpu')
   local available_screens = component.list('screen')
@@ -76,9 +135,60 @@ local function setScreens()
   if n == 1 then
     local addr_gpu = (available_gpus())
     local addr_screen = (available_screens())
-    return {addr_gpu}, {component.proxy(addr_gpu)}, {addr_screen},
+    local gpu = component.proxy(addr_gpu)
+    gpu.bind(addr_screen)
+    return {addr_gpu}, {gpu}, {addr_screen},
       {component.proxy(addr_screen)}
   end
+
+  varprint(n..' gpu-screen pairs available. The screens will be lighted up, '
+               ..'touch them in the order you desire (works only for screens of'
+               ..' tier 2 and 3). The last screen will be considered primary.')
+  varprint('Press [q] now to quit or [s] to start...')
+  if getInput('sq') == 'q' then return -1 end
+  local bound_pairs = {}
+  local setting_old = {}
+  for _ = 1, n do
+    local gpu = component.proxy((available_gpus()))
+    local addr_screen = available_screens()
+    gpu.bind(addr_screen)
+    local bc, bp = gpu.setBackground(0xFFFFFF, false)
+    local fc, fp = gpu.setForeground(0, false)
+    setting_old[addr_screen] = {bc, bp, fc, fp}
+    bound_pairs[addr_screen] = gpu
+  end
+  local addresses_gpu = {}
+  local proxies_gpu = {}
+  local addresses_screen = {}
+  local proxies_screen = {}
+  for index = 1, n-1 do
+    local _, addr_screen = event.pull('touch')
+    local gpu = bound_pairs[addr_screen]
+    bigPrint(gpu, index)
+    table.insert(addresses_gpu, gpu.address)
+    table.insert(proxies_gpu, gpu)
+    table.insert(addresses_screen, addr_screen)
+    table.insert(proxies_screen, component.proxy(addr_screen))
+    bound_pairs[addr_screen] = nil
+  end
+  do
+    local addr_screen, gpu = next(bound_pairs)
+    table.insert(addresses_gpu, gpu.address)
+    table.insert(proxies_gpu, gpu)
+    table.insert(addresses_screen, addr_screen)
+    table.insert(proxies_screen, component.proxy(addr_screen))
+    component.setPrimary('gpu', gpu.address)
+    component.setPrimary('screen', addr_screen)
+  end
+  for addr_screen in addresses_screen do
+    local bc, bp, fc, fp = setting_old[addr_screen]
+    local gpu = bound_pairs[addr_screen]
+    gpu.setBackground(bc, bp)
+    gpu.setForeground(fc, fp)
+    local width, height = gpu.getResolution()
+    gpu.fill(1, 1, width, height, ' ')
+  end
+  return addresses_gpu, proxies_gpu, addresses_screen, proxies_screen
 end
 
 local function setReactor()
@@ -95,38 +205,37 @@ local function setReactor()
   if n == 1 then
     local addr = (available())
     return addr, component.proxy(addr)
-  else
-    varprint(n..' reactors are available. Press [y] to choose the currently '
-           ..'activated reactor, or [n] to activate another reactor. '
-           ..'Press [q] to quit.')
-    varprint('Press [s] to start...')
-    if getInput('sq') == 'q' then return -1 end
+  end
+  varprint(n..' reactors are available. Press [y] to choose the currently '
+         ..'activated reactor, or [n] to activate another reactor. '
+         ..'Press [q] to quit.')
+  varprint('Press [s] to start...')
+  if getInput('sq') == 'q' then return -1 end
 
-    while true do
-      local i = 0
-      for addr, _ in pairs(available) do
-        local reactor = component.proxy(addr)
-        local rod_levels = {}
-        for j = 1, reactor.getNumberOfControlRods() do
-          table.insert(rod_levels, reactor.getControlRodLevel(j - 1))
-        end
-        reactor.setAllControlRodLevels(100)
-        reactor.setActive(true)
+  while true do
+    local i = 0
+    for addr, _ in pairs(available) do
+      local reactor = component.proxy(addr)
+      local rod_levels = {}
+      for j = 1, reactor.getNumberOfControlRods() do
+        table.insert(rod_levels, reactor.getControlRodLevel(j - 1))
+      end
+      reactor.setAllControlRodLevels(100)
+      reactor.setActive(true)
 
-        i = i + 1
-        varprint('['..i..'/'..n..']')
-        cmd = getInput('ynq')
+      i = i + 1
+      varprint('['..i..'/'..n..']')
+      cmd = getInput('ynq')
 
-        reactor.setActive(false)
-        for j = 1, reactor.getNumberOfControlRods() do
-          reactor.setControlRodLevel(j - 1, table.remove(rod_levels))
-        end
+      reactor.setActive(false)
+      for j = 1, reactor.getNumberOfControlRods() do
+        reactor.setControlRodLevel(j - 1, table.remove(rod_levels))
+      end
 
-        if cmd == 'y' then
-          return addr, reactor
-        elseif cmd == 'q' then
-          return -1
-        end
+      if cmd == 'y' then
+        return addr, reactor
+      elseif cmd == 'q' then
+        return -1
       end
     end
   end
@@ -138,68 +247,68 @@ local function setTurbines()
   if n == 0 then
     varprint('No available turbine.')
     return
-  elseif n == 1 then
+  end
+  if n == 1 then
     varprint('One turbine was found, do you want to use it [y/n/q]?')
     local cmd = getInput('ynq')
     if cmd == 'n' then return end
     if cmd == 'q' then return -1 end
     local addr = (available())
     return {addr}, {component.proxy(addr)}
-  else
-    term.clear()
-    varprint('There are '..n..' turbines. How many will be used?')
-    local count = tonumber(io.read())
-    if not count or count < 0 or count > n or count % 1 ~= 0 then
-      io.stderr:write('Error: illegal value')
-      return -1
-    end
-    local addresses = {}
-    local proxies = {}
-    for i = 1, count do
-      if n == i then
-        for addr, _ in pairs(available) do
-          table.insert(addresses, addr)
-          table.insert(proxies, component.proxy(addr))
-          break
-        end
+  end
+  term.clear()
+  varprint('There are '..n..' turbines. How many will be used?')
+  local count = tonumber(io.read())
+  if not count or count < 0 or count > n or count % 1 ~= 0 then
+    io.stderr:write('Error: illegal value')
+    return -1
+  end
+  local addresses = {}
+  local proxies = {}
+  for i = 1, count do
+    if n == i then
+      for addr, _ in pairs(available) do
+        table.insert(addresses, addr)
+        table.insert(proxies, component.proxy(addr))
         break
       end
-      varprint('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
-          ..'available. Press [y] to choose the activated turbine, or [n] '
-          ..'to activate another turbine. Press [q] to quit.')
-      local selected = false
-      while not selected do
-        local j = 0
-        for addr, _ in pairs(available) do
-          local turbine = component.proxy(addr)
-          local flow_rate_max = turbine.getFluidFlowRateMax()
-          local coils_engaged = turbine.getInductorEngaged()
-          turbine.setFluidFlowRateMax(0)
-          turbine.setInductorEngaged(false)
-          turbine.setActive(true)
+      break
+    end
+    varprint('Select '..i..'. turbine, there are '..(n - i + 1)..' turbines '
+        ..'available. Press [y] to choose the activated turbine, or [n] '
+        ..'to activate another turbine. Press [q] to quit.')
+    local selected = false
+    while not selected do
+      local j = 0
+      for addr, _ in pairs(available) do
+        local turbine = component.proxy(addr)
+        local flow_rate_max = turbine.getFluidFlowRateMax()
+        local coils_engaged = turbine.getInductorEngaged()
+        turbine.setFluidFlowRateMax(0)
+        turbine.setInductorEngaged(false)
+        turbine.setActive(true)
 
-          j = j + 1
-          varprint('['..j..'/'..(n - i + 1)..']')
-          local cmd = getInput('ynq')
+        j = j + 1
+        varprint('['..j..'/'..(n - i + 1)..']')
+        local cmd = getInput('ynq')
 
-          turbine.setActive(false)
-          turbine.setFluidFlowRateMax(flow_rate_max)
-          turbine.setInductorEngaged(coils_engaged)
+        turbine.setActive(false)
+        turbine.setFluidFlowRateMax(flow_rate_max)
+        turbine.setInductorEngaged(coils_engaged)
 
-          if cmd == 'y' then
-            table.insert(addresses, addr)
-            table.insert(proxies, turbine)
-            available[addr] = nil
-            selected = true
-            break
-          elseif cmd == 'q' then
-            return -1
-          end
+        if cmd == 'y' then
+          table.insert(addresses, addr)
+          table.insert(proxies, turbine)
+          available[addr] = nil
+          selected = true
+          break
+        elseif cmd == 'q' then
+          return -1
         end
       end
     end
-    return addresses, proxies
   end
+  return addresses, proxies
 end
 
 local function getFluids(filter, in_use)
@@ -290,9 +399,9 @@ local function setTanks(fluid_name, in_use)
     term.clear()
     varprint(count..' possible '..fluid_name..' tanks were found. Type '
                  ..'delimited list of indices to select some of them. Enter '
-                 ..'empty line to submit. Use command "l" to list non-selected '
-                 ..'tanks and "c" to toggle "change mode" - tanks that change '
-                 ..'the amount of liquid will be selected. Type "q" to quit.')
+                 ..'empty line to submit. Use command [l] to list non-selected '
+                 ..'tanks and [c] to toggle "change mode" - tanks that change '
+                 ..'the amount of liquid will be selected. Type [q] to quit.')
     printTanks(tanks, count)
     local cmd
     while cmd ~= '' do
