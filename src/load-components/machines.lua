@@ -182,7 +182,7 @@ local function setScreens()
     component.setPrimary('gpu', gpu.address)
     component.setPrimary('screen', addr_screen)
   end
-  for addr_screen in addresses_screen do
+  for _, addr_screen in pairs(addresses_screen) do
     local bc, bp, fc, fp = setting_old[addr_screen]
     local gpu = bound_pairs[addr_screen]
     gpu.setBackground(bc, bp)
