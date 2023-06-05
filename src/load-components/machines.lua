@@ -554,6 +554,8 @@ local function getConfig()
   (function ()
     if addresses.screens and addresses.gpus and
         len(addresses.screens) == len(addresses.gpus) then
+      proxies.gpus = {}
+      proxies.screens = {}
       for i, addr_gpu in ipairs(addresses.gpus) do
         local addr_screen = addresses.screens[i]
         if component.type(addr_gpu) == 'gpu' and
@@ -643,11 +645,11 @@ local function getConfig()
     else
       if not set('pumps') then return end
     end
+    if save then
+      saveConfig(addresses)
+    end
   end)()
 
-  if save then
-    saveConfig(addresses)
-  end
   return proxies
 end
 
