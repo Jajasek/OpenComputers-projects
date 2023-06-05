@@ -205,7 +205,7 @@ local function info(key)
     else
       print('  Turbines - stop')
     end
-    for i, turbine in machines.turbines do
+    for i, turbine in ipairs(machines.turbines) do
       local state = 'engaged'
       if not turbine.getInductorEngaged() then
         state = 'dis' .. state
