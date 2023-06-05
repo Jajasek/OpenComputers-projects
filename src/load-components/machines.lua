@@ -154,6 +154,8 @@ local function setScreens()
     gpu.bind(addr_screen)
     local bc, bp = gpu.setBackground(0xFFFFFF, false)
     local fc, fp = gpu.setForeground(0, false)
+    local width, height = gpu.getResolution()
+    gpu.fill(1, 1, width, height, ' ')
     setting_old[addr_screen] = {bc, bp, fc, fp}
     bound_pairs[addr_screen] = gpu
   end
