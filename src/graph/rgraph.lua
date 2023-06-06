@@ -18,13 +18,19 @@ local function get_pressure()
   return 1
 end
 
-
-event.listen('interrupted', function() running = false; return false end)
-
 local graph = require('graph').new(machines.gpus[1], machines.screens[1], 5)
 graph.set_palette(0xffffff, 0x663300, 0xffcc33, 0xff3333, 0xcc66cc)
+event.listen(
+    'interrupted', function()
+      print("interrupting...")
+      running = false
+      graph.clear()
+      return false
+    end
+)
+
 while running do
-  os.sleep(0.5/FPS)
+  os.sleep(1/FPS - 1.1)  -- graphing takes 1.1s
   graph.add_percent(
     get_pressure(),
     machines.reactor.getControlRodLevel(0) / 100,
