@@ -143,13 +143,15 @@ local function setScreens()
   --gpu.maxResolution(), because there is no way to distinguish tiers). If a
   --combination has to be suboptimal, ask the user which one.
   if n == 1 then
-    varprint('One gpu-screen pair available.')
-    local addr_gpu = (available_gpus())
-    local addr_screen = (available_screens())
-    local gpu = component.proxy(addr_gpu)
-    gpu.bind(addr_screen)
-    return {addr_gpu}, {gpu}, {addr_screen},
-      {component.proxy(addr_screen)}
+    varprint('One gpu-screen pair available, choosing primary.')
+    return {component.gpu.address}, {component.gpu},
+      {component.screen.address}, {component.screen}
+    --local addr_gpu = (available_gpus())
+    --local addr_screen = (available_screens())
+    --local gpu = component.proxy(addr_gpu)
+    --gpu.bind(addr_screen)
+    --return {addr_gpu}, {gpu}, {addr_screen},
+    --  {component.proxy(addr_screen)}
   end
 
   varprint(n..' gpu-screen pairs available. The screens will be lighted up, '
@@ -194,6 +196,7 @@ local function setScreens()
     table.insert(proxies_screen, component.proxy(addr_screen))
     component.setPrimary('gpu', gpu.address)
     component.setPrimary('screen', addr_screen)
+    term.bind(gpu)
   end
   for i, addr_screen in pairs(addresses_screen) do
     local bc, bp, fc, fp = table.unpack(setting_old[addr_screen])
