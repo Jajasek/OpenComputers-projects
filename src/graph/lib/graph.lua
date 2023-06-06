@@ -62,7 +62,9 @@ function graph.new(gpu, screen, number_of_values)  -- Supports both address and 
   else
     new_graph.screen = screen
   end
-  new_graph.gpu.bind(new_graph.screen.address)
+  if new_graph.gpu.getScreen() ~= new_graph.screen.address then
+    new_graph.gpu.bind(new_graph.screen.address)
+  end
   new_graph._plotted = {{}, {}}  -- there will be saved the color of all pixels in last two columns, 
    --                               _plotted[0] is on the left. Pixels are counted from top.
   new_graph._cursor = 1  -- the x-coordinate of left
@@ -79,6 +81,7 @@ function graph.new(gpu, screen, number_of_values)  -- Supports both address and 
   
   function new_graph.set_gpu(gpu)  -- Supports both address and proxy, clears screen
     new_graph._reset_values()
+    if new_graph.gpu == gpu or new_graph.gpu.address == gpu then return end
     if type(gpu) == "string" then
       new_graph.gpu = component.proxy(gpu)
     else
@@ -90,6 +93,9 @@ function graph.new(gpu, screen, number_of_values)  -- Supports both address and 
 
   function new_graph.set_screen(screen)  -- Supports both address and proxy, clears both old and new screen
     new_graph._reset_values()
+    if new_graph.screen == screen or new_graph.screen.address == screen then
+      return
+    end
     if type(screen) == "string" then
       new_graph.screen = component.proxy(screen)
     else
