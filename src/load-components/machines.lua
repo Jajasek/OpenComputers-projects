@@ -582,6 +582,9 @@ local function getConfig()
           break
         end
       end
+      component.setPrimary('gpu', addresses.gpus[#addresses.gpus])
+      component.setPrimary('screen', addresses.screens[#addresses.gpus])
+      term.bind(proxies.gpus[#addresses.gpus])
     else
       if not setGpusScreens() then return end
     end
