@@ -21,13 +21,15 @@ end
 
 event.listen('interrupted', function() running = false; return false end)
 
-local graph = require('graph').new(machines.gpus[1], machines.screens[1], 3)
-graph.default_palette()
+local graph = require('graph').new(machines.gpus[1], machines.screens[1], 5)
+graph.set_palette(0xffffff, 0x663300, 0xffcc33, 0xff3333, 0xcc66cc)
 while running do
   os.sleep(0.5/FPS)
   graph.add_percent(
     get_pressure(),
     machines.reactor.getControlRodLevel(0) / 100,
+    machines.reactor.getFuelTemperature() / 2000,
+    machines.reactor.getCasingTemperature() / 2000,
     target
   )
 end

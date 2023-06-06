@@ -10,7 +10,7 @@ local SPACE = 7
 local graph = {}
 
 
-function string_repeat(str, count)
+local function string_repeat(str, count)
   if count == 0 then return "" end
   local out = str
   for i = 1, count - 1 do
@@ -20,12 +20,12 @@ function string_repeat(str, count)
 end
 
 
-function pixel_to_char(y)  -- returns the y-coordinate of character cell, that contains the specified pixel (both counted from top)
+local function pixel_to_char(y)  -- returns the y-coordinate of character cell, that contains the specified pixel (both counted from top)
   return floor((y + 1) / 2)
 end
 
 
-function counterpart(y)  -- returns the y-coordinate of the pixel, that is in the same character cell as y
+local function counterpart(y)  -- returns the y-coordinate of the pixel, that is in the same character cell as y
   if y % 2 == 0 then
     return y - 1
   else
@@ -34,17 +34,17 @@ function counterpart(y)  -- returns the y-coordinate of the pixel, that is in th
 end
 
 
-function is_between(a, b, c)  -- returns true if b is between a and c (inclusive)
+local function is_between(a, b, c)  -- returns true if b is between a and c (inclusive)
   return (c - b) * (b - a) >= 0
 end
 
 
-function sgn(a)  -- returns sign of a, i.e. 1 for non-negative values and -1 for negative
+local function sgn(a)  -- returns sign of a, i.e. 1 for non-negative values and -1 for negative
   return a >= 0 and 1 or -1
 end
 
 
-function int(a)  -- rounds a towards zero
+local function int(a)  -- rounds a towards zero
   return sgn(a) * floor(abs(a))
 end
 
@@ -101,7 +101,7 @@ function graph.new(gpu, screen, number_of_values)  -- Supports both address and 
     else
       new_graph.screen = screen
     end
-    new_graph.gpu.bind(new.screen.address)
+    new_graph.gpu.bind(new_graph.screen.address)
     new_graph.clear()
   end
   
@@ -135,6 +135,13 @@ function graph.new(gpu, screen, number_of_values)  -- Supports both address and 
   function new_graph.default_palette()  -- set the palette to the standart minecraft colors as saved in /usr/lib/colorCodes.lua
     for index, color in ipairs(require("colorCodes")) do
       new_graph.gpu.setPaletteColor(index - 1, color)
+    end
+  end
+
+
+  function new_graph.set_palette(...)  -- one color in RGB for each value
+    for index = 1, new_graph._number_of_values do
+      new_graph.gpu.setPaletteColor(index - 1, (select(index, ...)))
     end
   end
   
@@ -200,7 +207,7 @@ function graph.new(gpu, screen, number_of_values)  -- Supports both address and 
     local _, y = new_graph.gpu.getResolution()
     local coefficient = 2 * y - 1
     for i = 1, new_graph._number_of_values do
-      value = select(i, ...)
+      local value = select(i, ...)
       if value == nil then
         values[i] = nil
       else
