@@ -54,7 +54,7 @@ local function loadConfig()
   end
   local sConfig = file:read('*a')
   file:close()
-  return serial.unserialize(sConfig)
+  return serial.unserialize(sConfig) or {}
 end
 
 local function saveConfig(config)
