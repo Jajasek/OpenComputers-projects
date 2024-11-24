@@ -7,6 +7,10 @@ local target_t = {}
 local enable_coil = {}
 local INDUCTION_THRESHOLD = 64
 
+local TARGET_T_STANDBY = 60
+local TARGET_T_LOW = 900
+local TARGET_T_HIGH = 1800
+
 local target_r = 0.93  -- the fraction of available steam storage space that we
                        -- want to be filled
 local mode_r = 'balance'  -- can be 'balance', 'standby' or 'stop'
@@ -100,27 +104,27 @@ local function _change_mode_turbine(key)
   if key == K_POWER1 then
     print('Turbines - power_1')
     mode_t = 'power_1'
-    target_t = {900, 900, 60}
+    target_t = {TARGET_T_LOW, TARGET_T_LOW, TARGET_T_STANDBY}
     enable_coil = {true, false, false}
   elseif key == K_POWER2 then
     print('Turbines - power_2')
     mode_t = 'power_2'
-    target_t = {900, 1845, 900}
+    target_t = {TARGET_T_LOW, TARGET_T_HIGH, TARGET_T_LOW}
     enable_coil = {true, true, false}
   elseif key == K_POWER3 then
     print('Turbines - power_3')
     mode_t = 'power_3'
-    target_t = {900, 1845, 1845}
+    target_t = {TARGET_T_LOW, TARGET_T_HIGH, TARGET_T_HIGH}
     enable_coil = {true, true, true}
   elseif key == K_POWER4 then
     print('Turbines - power_4')
     mode_t = 'power_4'
-    target_t = {1845, 1845, 1845}
+    target_t = {TARGET_T_HIGH, TARGET_T_HIGH, TARGET_T_HIGH}
     enable_coil = {true, true, true}
   elseif key == K_TURBINES_STANDBY then
     print('Turbines - standby')
     mode_t = 'standby'
-    target_t = {60, 60, 60}
+    target_t = {TARGET_T_STANDBY, TARGET_T_STANDBY, TARGET_T_STANDBY}
     enable_coil = {false, false, false}
   else
     return
@@ -162,17 +166,17 @@ local function change_mode_turbine(key)
   end
 
   if mode_tn == #machines.turbines + 1 then
-    target_t[1] = 1845
+    target_t[1] = TARGET_T_HIGH
   else
-    target_t[1] = 900
+    target_t[1] = TARGET_T_LOW
   end
   enable_coil[1] = mode_tn ~= 0
   regulators_t[1].set_setpoint(target_t[1])
   for i = 2, #machines.turbines do
     if i > mode_tn + 1 then
-      target_t[i] = 60
+      target_t[i] = TARGET_T_STANDBY
     else
-      target_t[i] = 1845
+      target_t[i] = TARGET_T_HIGH
     end
     enable_coil[i] = i <= mode_tn
     regulators_t[i].set_setpoint(target_t[i])
