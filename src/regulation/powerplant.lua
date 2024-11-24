@@ -46,6 +46,35 @@ local K_REACTOR_STOP = string.byte('r')
 local K_STOP = string.byte(' ')
 local K_GET_STATE = string.byte('g')
 local K_HELP = string.byte('h')
+local HELP_TEXT = [[
+Available commands:
+  Stop machines:
+    space  PRESS WHEN EVERYTHING GOES WRONG
+           Stop everything.
+    r      Stop reactor.
+    t      Stop all turbines.
+  Operate reactor:
+    s      Put reactor into 'standby' mode. This means that it
+           is turned off, but the powerplant program will turn
+           it into 'balance' mode when more steam is needed.
+    b      Put reactor into 'balanced' mode. This means that it
+           is turned on and is regulated by the powerplant
+           program. If steam consumption is too low and the steam
+           tanks are almost full, powerplant program will put it
+           into 'standby' mode.
+  Operate turbines:
+    p      Enable turbines after they have been stopped by one
+           of the commands 'space' or 't'.
+    +      Increase the target power of the turbines. The number
+           of available power modes depends on the number of
+           available turbines.
+    -      Decrease the target power of the turbines.
+  Miscellaneous:
+    g      Print the current mode of reactor and turbines.
+    h      Print this help text.
+]]
+-- Print notice to user at start
+print("Display available commands by pressing 'h'.")
 
 local regulators_t = {}
 for _, turbine in ipairs(machines.turbines) do
@@ -216,7 +245,7 @@ local function info(key)
     end
     print(string.format('  Reactor - %s', mode_r))
   elseif key == K_HELP then
-    print('Commands: <space>, r, t; s, b; p, +, -; g, h')
+    print(HELP_TEXT)
   end
 end
 
